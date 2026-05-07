@@ -17,7 +17,7 @@
 
 CREATE DATABASE IF NOT EXISTS attendance_db
   DEFAULT CHARACTER SET utf8mb4
-  DEFAULT COLLATE utf8mb4_unicode_ci;
+  DEFAULT COLLATE utf8mb4_0900_ai_ci;
 
 USE attendance_db;
 
@@ -52,7 +52,7 @@ CREATE TABLE student_info (
   INDEX idx_student_name (name),
   INDEX idx_student_feature_version (feature_version),
   CHECK (status IN (0, 1))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='学生信息表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='学生信息表';
 
 CREATE TABLE calendar_date (
   stat_date DATE NOT NULL COMMENT '日期',
@@ -61,7 +61,7 @@ CREATE TABLE calendar_date (
   day_num TINYINT NOT NULL COMMENT '日',
   PRIMARY KEY (stat_date),
   INDEX idx_calendar_year_month (year_num, month_num)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='报表日期维表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='报表日期维表';
 
 CREATE TABLE class_enrollment_history (
   enrollment_id BIGINT NOT NULL AUTO_INCREMENT COMMENT '班级归属历史ID',
@@ -79,7 +79,7 @@ CREATE TABLE class_enrollment_history (
     ON UPDATE CASCADE
     ON DELETE CASCADE,
   CHECK (left_at IS NULL OR left_at > enrolled_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='班级归属历史表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='班级归属历史表';
 
 CREATE TABLE user_info (
   user_id VARCHAR(20) NOT NULL COMMENT '用户ID',
@@ -96,22 +96,45 @@ CREATE TABLE user_info (
   PRIMARY KEY (user_id),
   INDEX idx_user_username (username),
   INDEX idx_user_role (role),
+  INDEX idx_user_student_id (student_id),
   UNIQUE KEY uk_user_active_username (active_username),
   UNIQUE KEY uk_user_active_student_id (active_student_id),
   CONSTRAINT fk_user_student
     FOREIGN KEY (student_id) REFERENCES student_info(student_id)
-    ON UPDATE CASCADE
+    ON UPDATE RESTRICT
     ON DELETE RESTRICT,
-  CHECK (status IN (0, 1)),
-  CONSTRAINT chk_user_role_student_link CHECK (
-    (role = 'student' AND student_id IS NOT NULL)
-    OR (role IN ('teacher', 'admin') AND student_id IS NULL)
-  )
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户信息表';
+  CHECK (status IN (0, 1))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='用户信息表';
+
+DELIMITER $$
+
+CREATE TRIGGER trg_user_role_student_link_bi
+BEFORE INSERT ON user_info
+FOR EACH ROW
+BEGIN
+  IF (NEW.role = 'student' AND NEW.student_id IS NULL)
+     OR (NEW.role IN ('teacher', 'admin') AND NEW.student_id IS NOT NULL) THEN
+    SIGNAL SQLSTATE '45000'
+      SET MESSAGE_TEXT = 'Invalid user_info role/student_id relationship';
+  END IF;
+END$$
+
+CREATE TRIGGER trg_user_role_student_link_bu
+BEFORE UPDATE ON user_info
+FOR EACH ROW
+BEGIN
+  IF (NEW.role = 'student' AND NEW.student_id IS NULL)
+     OR (NEW.role IN ('teacher', 'admin') AND NEW.student_id IS NOT NULL) THEN
+    SIGNAL SQLSTATE '45000'
+      SET MESSAGE_TEXT = 'Invalid user_info role/student_id relationship';
+  END IF;
+END$$
+
+DELIMITER ;
 
 CREATE TABLE attendance_record (
   record_id BIGINT NOT NULL AUTO_INCREMENT COMMENT '考勤记录ID',
-  student_id VARCHAR(20) NULL COMMENT '识别成功时关联学号',
+  student_id VARCHAR(20) NULL COMMENT '请求关联或识别成功时关联学号，出勤统计必须结合status=1',
   class_name VARCHAR(50) NULL COMMENT '考勤发生时的班级快照',
   status TINYINT NOT NULL COMMENT '考勤状态：0失败，1成功',
   confidence DECIMAL(5,2) NULL COMMENT '人脸匹配置信度，0-100',
@@ -140,7 +163,7 @@ CREATE TABLE attendance_record (
     ON DELETE SET NULL,
   CHECK (status IN (0, 1)),
   CHECK (liveness_passed IN (0, 1))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='考勤记录表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='考勤记录表';
 
 CREATE TABLE group_photo_record (
   photo_id BIGINT NOT NULL AUTO_INCREMENT COMMENT '合照记录ID',
@@ -161,7 +184,7 @@ CREATE TABLE group_photo_record (
     FOREIGN KEY (created_by) REFERENCES user_info(user_id)
     ON UPDATE CASCADE
     ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='合照识别记录表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='合照识别记录表';
 
 CREATE TABLE group_photo_recognition_detail (
   detail_id BIGINT NOT NULL AUTO_INCREMENT COMMENT '合照识别明细ID',
@@ -190,7 +213,7 @@ CREATE TABLE group_photo_recognition_detail (
     ON UPDATE CASCADE
     ON DELETE SET NULL,
   CHECK (status IN (0, 1))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='合照识别明细表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='合照识别明细表';
 
 CREATE TABLE emotion_record (
   emotion_id BIGINT NOT NULL AUTO_INCREMENT COMMENT '情绪记录ID',
@@ -209,6 +232,8 @@ CREATE TABLE emotion_record (
   INDEX idx_emotion_class_time (class_name, detected_at),
   INDEX idx_emotion_type_time (emotion, detected_at),
   INDEX idx_emotion_source (source_type, attendance_record_id, group_detail_id),
+  INDEX idx_emotion_attendance_record (attendance_record_id),
+  INDEX idx_emotion_group_detail (group_detail_id),
   CONSTRAINT fk_emotion_student
     FOREIGN KEY (student_id) REFERENCES student_info(student_id)
     ON UPDATE CASCADE
@@ -220,9 +245,35 @@ CREATE TABLE emotion_record (
   CONSTRAINT fk_emotion_group_detail
     FOREIGN KEY (group_detail_id) REFERENCES group_photo_recognition_detail(detail_id)
     ON UPDATE CASCADE
-    ON DELETE CASCADE,
-  CONSTRAINT chk_emotion_source CHECK (
-    (source_type = 'attendance' AND attendance_record_id IS NOT NULL AND group_detail_id IS NULL)
-    OR (source_type = 'group_photo' AND attendance_record_id IS NULL AND group_detail_id IS NOT NULL)
-  )
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='情绪记录表';
+    ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='情绪记录表';
+
+DELIMITER $$
+
+CREATE TRIGGER trg_emotion_source_bi
+BEFORE INSERT ON emotion_record
+FOR EACH ROW
+BEGIN
+  IF NOT (
+    (NEW.source_type = 'attendance' AND NEW.attendance_record_id IS NOT NULL AND NEW.group_detail_id IS NULL)
+    OR (NEW.source_type = 'group_photo' AND NEW.attendance_record_id IS NULL AND NEW.group_detail_id IS NOT NULL)
+  ) THEN
+    SIGNAL SQLSTATE '45000'
+      SET MESSAGE_TEXT = 'Invalid emotion_record source relationship';
+  END IF;
+END$$
+
+CREATE TRIGGER trg_emotion_source_bu
+BEFORE UPDATE ON emotion_record
+FOR EACH ROW
+BEGIN
+  IF NOT (
+    (NEW.source_type = 'attendance' AND NEW.attendance_record_id IS NOT NULL AND NEW.group_detail_id IS NULL)
+    OR (NEW.source_type = 'group_photo' AND NEW.attendance_record_id IS NULL AND NEW.group_detail_id IS NOT NULL)
+  ) THEN
+    SIGNAL SQLSTATE '45000'
+      SET MESSAGE_TEXT = 'Invalid emotion_record source relationship';
+  END IF;
+END$$
+
+DELIMITER ;
