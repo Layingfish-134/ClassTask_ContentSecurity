@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>班级考勤系统 - 登录</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .login-container {
+      background: white;
+      padding: 48px;
+      border-radius: 16px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .login-header h1 {
+      font-size: 24px;
+      color: #333;
+      margin-bottom: 8px;
+    }
+
+    .login-header p {
+      color: #8c8c8c;
+      font-size: 14px;
+    }
+
+    .login-form {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .form-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-item label {
+      font-size: 14px;
+      color: #333;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+
+    .form-item input {
+      padding: 12px 16px;
+      border: 1px solid #d9d9d9;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: border-color 0.3s;
+    }
+
+    .form-item input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .form-item input::placeholder {
+      color: #bfbfbf;
+    }
+
+    .login-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 14px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .login-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .login-btn:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .error-message {
+      color: #f5222d;
+      font-size: 12px;
+      text-align: center;
+      margin-top: 12px;
+      min-height: 18px;
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid #ffffff;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .demo-info {
+      margin-top: 24px;
+      padding: 16px;
+      background: #f5f7fa;
+      border-radius: 8px;
+    }
+
+    .demo-info p {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 4px;
+    }
+
+    .demo-info p:last-child {
+      margin-bottom: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="login-container">
+    <div class="login-header">
+      <h1>班级考勤系统</h1>
+      <p>人脸识别考勤与情绪分析平台</p>
+    </div>
+
+    <form class="login-form" id="loginForm">
+      <div class="form-item">
+        <label for="username">用户名</label>
+        <input type="text" id="username" placeholder="请输入用户名" required />
+      </div>
+
+      <div class="form-item">
+        <label for="password">密码</label>
+        <input type="password" id="password" placeholder="请输入密码" required />
+      </div>
+
+      <button type="submit" class="login-btn" id="loginBtn">
+        <span id="btnText">登 录</span>
+        <span id="btnSpinner" style="display: none;" class="loading-spinner"></span>
+      </button>
+    </form>
+
+    <div class="error-message" id="errorMessage"></div>
+
+    <div class="demo-info">
+      <p><strong>演示账号：</strong></p>
+      <p>用户名: admin | 密码: admin123</p>
+      <p>用户名: teacher001 | 密码: 123456</p>
+    </div>
+  </div>
+
+  <script>
+    const loginForm = document.getElementById('loginForm')
+    const usernameInput = document.getElementById('username')
+    const passwordInput = document.getElementById('password')
+    const loginBtn = document.getElementById('loginBtn')
+    const btnText = document.getElementById('btnText')
+    const btnSpinner = document.getElementById('btnSpinner')
+    const errorMessage = document.getElementById('errorMessage')
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault()
+
+      const username = usernameInput.value.trim()
+      const password = passwordInput.value.trim()
+
+      if (!username || !password) {
+        errorMessage.textContent = '请填写用户名和密码'
+        return
+      }
+
+      loginBtn.disabled = true
+      btnText.textContent = ''
+      btnSpinner.style.display = 'inline-block'
+      errorMessage.textContent = ''
+
+      try {
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ username, password })
+        })
+
+        const data = await response.json()
+
+        if (data.code === 200) {
+          localStorage.setItem('access_token', data.data.access_token)
+          localStorage.setItem('refresh_token', data.data.refresh_token)
+          window.location.href = '/'
+        } else {
+          errorMessage.textContent = data.message || '登录失败'
+        }
+      } catch (error) {
+        errorMessage.textContent = '网络错误，请稍后重试'
+      } finally {
+        loginBtn.disabled = false
+        btnText.textContent = '登 录'
+        btnSpinner.style.display = 'none'
+      }
+    })
+  </script>
+</body>
+
+</html>

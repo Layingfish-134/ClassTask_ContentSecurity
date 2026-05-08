@@ -1,0 +1,115 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Microsoft YaHei', 'PingFang SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background-color: #f5f7fa;
+  color: #333;
+}
+
+.el-card {
+  margin-bottom: 20px;
+}
+
+.el-button {
+  margin-right: 8px;
+}
+
+.el-form-item {
+  margin-bottom: 20px;
+}
+
+.page-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 16px 24px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+.page-footer {
+  background: #fff;
+  padding: 16px;
+  text-align: center;
+  border-top: 1px solid #eee;
+  margin-top: auto;
+}
+
+.card-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: #303133;
+}
+
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.video-container {
+  background: #000;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+
+.video-container video {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.emotion-tag {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.emotion-happy {
+  background: #fff7e6;
+  color: #d46b08;
+}
+
+.emotion-sad {
+  background: #e6f7ff;
+  color: #1890ff;
+}
+
+.emotion-surprised {
+  background: #fff1e6;
+  color: #fa8c16;
+}
+
+.emotion-angry {
+  background: #fff2f0;
+  color: #f5222d;
+}
+
+.emotion-neutral {
+  background: #f7f8fa;
+  color: #8c8c8c;
+}
+
+.status-success {
+  color: #52c41a;
+}
+
+.status-failed {
+  color: #f5222d;
+}
