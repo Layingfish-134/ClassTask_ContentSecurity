@@ -77,18 +77,25 @@ class CurrentUserResource(Resource):
 def init_default_users():
     default_accounts = [
         {
-            'user_id': 'admin',
+            'user_id': 'u_admin_001',
             'username': 'admin',
-            'password': 'admin123',
+            'password': 'demo_hash_123456',
             'role': 'admin',
             'student_id': None
         },
         {
-            'user_id': 'teacher001',
-            'username': 'teacher001',
-            'password': '123456',
+            'user_id': 'u_teacher_001',
+            'username': 'teacher01',
+            'password': 'demo_hash_123456',
             'role': 'teacher',
             'student_id': None
+        },
+        {
+            'user_id': 'u_student_20240001',
+            'username': '20240001',
+            'password': 'demo_hash_123456',
+            'role': 'student',
+            'student_id': '20240001'
         }
     ]
 
