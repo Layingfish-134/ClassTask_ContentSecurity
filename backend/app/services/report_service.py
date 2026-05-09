@@ -158,6 +158,13 @@ class ReportService:
             source_type=source_type, start_time=start_time, end_time=end_time
         )
 
+    def get_emotion_trend(self, class_name=None, student_id=None,
+                          source_type=None, start_time=None, end_time=None):
+        return AttendanceRecordRepository.find_emotion_trend(
+            class_name=class_name, student_id=student_id,
+            source_type=source_type, start_time=start_time, end_time=end_time
+        )
+
     def export_attendance_report(self, class_name=None, start_time=None, end_time=None):
         import pandas as pd
         from io import BytesIO

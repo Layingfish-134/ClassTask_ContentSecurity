@@ -22,6 +22,7 @@ def create_app():
     app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'jwt-attendance-secret-key')
     app.config['UPLOAD_FOLDER'] = os.getenv('UPLOAD_FOLDER', 'uploads/')
     app.config['MAX_CONTENT_LENGTH'] = int(os.getenv('MAX_CONTENT_LENGTH', 10485760))
+    app.config['PROPAGATE_EXCEPTIONS'] = True
 
     logging.basicConfig(
         level=logging.INFO,
@@ -30,7 +31,8 @@ def create_app():
 
     CORS(app, resources={r"/api/*": {"origins": "*"}})
 
-    JWTManager(app)
+    jwt = JWTManager(app)
+    _register_jwt_handlers(jwt)
 
     init_db(app)
 
@@ -50,6 +52,30 @@ def create_app():
     return app
 
 
+def _register_jwt_handlers(jwt):
+    from app.dto.response.common import error_response, BizCode
+
+    @jwt.unauthorized_loader
+    def handle_missing_token(reason):
+        return error_response('未登录或登录状态已失效', BizCode.UNAUTHORIZED)
+
+    @jwt.invalid_token_loader
+    def handle_invalid_token(reason):
+        return error_response('登录状态无效，请重新登录', BizCode.UNAUTHORIZED)
+
+    @jwt.expired_token_loader
+    def handle_expired_token(jwt_header, jwt_payload):
+        return error_response('登录状态已过期，请重新登录', BizCode.TOKEN_EXPIRED)
+
+    @jwt.revoked_token_loader
+    def handle_revoked_token(jwt_header, jwt_payload):
+        return error_response('登录状态已失效，请重新登录', BizCode.UNAUTHORIZED)
+
+    @jwt.needs_fresh_token_loader
+    def handle_needs_fresh_token(jwt_header, jwt_payload):
+        return error_response('需要重新登录后继续操作', BizCode.UNAUTHORIZED)
+
+
 def _register_routes(api):
     from app.controllers.attendance_controller import CheckinResource, AttendanceRecordResource
     from app.controllers.student_controller import (
@@ -57,7 +83,7 @@ def _register_routes(api):
         StudentBatchImportResource, StudentBatchImportExcelResource
     )
     from app.controllers.group_photo_controller import GroupPhotoRecognizeResource, GroupPhotoRecordResource
-    from app.controllers.emotion_controller import EmotionStatisticsResource
+    from app.controllers.emotion_controller import EmotionStatisticsResource, EmotionTrendResource
     from app.controllers.report_controller import (
         AttendanceExportResource, ActivityFrequencyExportResource, FileAccessResource
     )
@@ -79,6 +105,7 @@ def _register_routes(api):
     api.add_resource(GroupPhotoRecordResource, '/group-photo/records')
 
     api.add_resource(EmotionStatisticsResource, '/emotion/statistics')
+    api.add_resource(EmotionTrendResource, '/emotion/trend')
 
     api.add_resource(AttendanceExportResource, '/reports/attendance/export')
     api.add_resource(ActivityFrequencyExportResource, '/reports/activity-frequency/export')

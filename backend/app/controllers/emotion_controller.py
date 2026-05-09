@@ -33,3 +33,32 @@ class EmotionStatisticsResource(Resource):
             return success_response(result)
         except Exception as e:
             return error_response(f'查询情绪统计异常: {str(e)}', BizCode.INTERNAL_ERROR)
+
+
+class EmotionTrendResource(Resource):
+    def __init__(self):
+        self.report_service = ReportService()
+
+    @jwt_required()
+    def get(self):
+        args = emotion_query_parser.parse_args()
+        current_user = get_current_user()
+
+        class_name = args.get('class_name')
+        student_id = args.get('student_id')
+
+        if current_user and current_user.role == 'student':
+            student_id = current_user.student_id
+            class_name = None
+
+        try:
+            result = self.report_service.get_emotion_trend(
+                class_name=class_name,
+                student_id=student_id,
+                source_type=args.get('source_type'),
+                start_time=args.get('start_time'),
+                end_time=args.get('end_time')
+            )
+            return success_response(result)
+        except Exception as e:
+            return error_response(f'查询情绪趋势异常: {str(e)}', BizCode.INTERNAL_ERROR)

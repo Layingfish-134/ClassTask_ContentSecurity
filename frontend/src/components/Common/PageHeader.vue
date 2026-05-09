@@ -63,7 +63,7 @@ const handleNavClick = (nav) => {
 const handleLogout = () => {
   localStorage.removeItem('access_token')
   localStorage.removeItem('refresh_token')
-  window.location.reload()
+  window.location.href = '/login.html'
 }
 
 onMounted(async () => {
@@ -79,6 +79,9 @@ onMounted(async () => {
     }
   } catch (error) {
     console.error('获取用户信息失败:', error)
+    localStorage.removeItem('access_token')
+    localStorage.removeItem('refresh_token')
+    window.location.href = '/login.html'
   }
 })
 </script>

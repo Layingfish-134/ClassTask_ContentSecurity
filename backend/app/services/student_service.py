@@ -36,20 +36,22 @@ class StudentService:
         )
         db.session.add(student)
 
-        if username and password:
-            existing_user = User.query.filter_by(username=username).first()
-            if existing_user:
-                raise ValueError(f'用户名 {username} 已存在')
-            hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-            user = User(
-                user_id=f"stu_{student_id}",
-                username=username,
-                password_hash=hashed,
-                role='student',
-                student_id=student_id,
-                status=1
-            )
-            db.session.add(user)
+        user_username = username if username else student_id
+        user_password = password if password else '123456'
+
+        existing_user = User.query.filter_by(username=user_username).first()
+        if existing_user:
+            raise ValueError(f'用户名 {user_username} 已存在')
+        hashed = bcrypt.hashpw(user_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        user = User(
+            user_id=f"stu_{student_id}",
+            username=user_username,
+            password_hash=hashed,
+            role='student',
+            student_id=student_id,
+            status=1
+        )
+        db.session.add(user)
 
         db.session.commit()
         return student
@@ -84,12 +86,12 @@ class StudentService:
         student.status = 0
         db.session.commit()
 
-    def get_students(self, class_name=None, keyword=None, cursor=None, size=20):
-        records, has_more, next_cursor = StudentRepository.find_all_cursor(
-            cursor=cursor, size=size,
+    def get_students(self, class_name=None, keyword=None, page=1, size=20):
+        pagination = StudentRepository.find_all(
+            page=page, size=size,
             class_name=class_name, keyword=keyword
         )
-        return [s.to_dict() for s in records], size, next_cursor, has_more
+        return [s.to_dict() for s in pagination.items], pagination.total
 
     def get_student_by_id(self, student_id):
         return StudentRepository.find_by_id(student_id)

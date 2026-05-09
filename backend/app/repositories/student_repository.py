@@ -9,7 +9,7 @@ class StudentRepository:
 
     @staticmethod
     def find_all(page=1, size=20, class_name=None, keyword=None):
-        query = Student.query
+        query = Student.query.filter(Student.status == 1)
         if class_name:
             query = query.filter(Student.class_name == class_name)
         if keyword:

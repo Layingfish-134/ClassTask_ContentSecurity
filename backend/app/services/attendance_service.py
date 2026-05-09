@@ -17,7 +17,7 @@ class AttendanceService:
         self.face_service = FaceRecognitionService()
 
     def checkin(self, image_base64, image_format, idempotency_key=None,
-                device_id=None, capture_time=None, frames_base64=None):
+                device_id=None, capture_time=None, frames_base64=None, current_user=None):
         if idempotency_key:
             existing = AttendanceRecord.query.filter_by(idempotency_key=idempotency_key).first()
             if existing:
@@ -52,7 +52,11 @@ class AttendanceService:
                 'failure_reason': liveness_result.get('failure_reason', 'liveness_failed')
             }, BizCode.PHOTO_ATTACK if liveness_result.get('spoof_type') == 'photo_attack' else BizCode.VIDEO_REPLAY if liveness_result.get('spoof_type') == 'video_replay' else BizCode.LIVENESS_FAILED
 
-        match_result, emotion_result = self.face_service.recognize_single_face(image_base64)
+        target_student_id = None
+        if current_user and current_user.role == 'student':
+            target_student_id = current_user.student_id
+
+        match_result, emotion_result = self.face_service.recognize_single_face(image_base64, target_student_id=target_student_id)
 
         image_path = None
         try:
