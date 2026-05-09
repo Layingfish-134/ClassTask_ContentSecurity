@@ -35,7 +35,12 @@ class FaceRecognitionService:
         if face_result is None:
             return FaceMatchResult(matched=False), EmotionResult()
 
-        feature = self.feature_extractor.extract_feature(face_result['face_image'])
+        keypoints = face_result.get('keypoints', [])
+        feature = self.feature_extractor.extract_feature(
+            face_result['face_image'],
+            original_image=image,
+            keypoints=keypoints if keypoints else None
+        )
         if feature is None:
             return FaceMatchResult(matched=False), EmotionResult()
 
@@ -80,7 +85,25 @@ class FaceRecognitionService:
             if face_image.size == 0:
                 continue
 
-            feature = self.feature_extractor.extract_feature(face_image)
+            keypoints = face_info.get('keypoints', {})
+            keypoints_list = None
+            if keypoints:
+                keypoints_list = []
+                for name in [
+                    'left_eye', 'right_eye', 'nose',
+                    'left_mouth', 'right_mouth'
+                ]:
+                    if name in keypoints:
+                        keypoints_list.append([
+                            keypoints[name]['x'],
+                            keypoints[name]['y']
+                        ])
+
+            feature = self.feature_extractor.extract_feature(
+                face_image,
+                original_image=image,
+                keypoints=keypoints_list if keypoints_list else None
+            )
             if feature is None:
                 continue
 
