@@ -73,7 +73,7 @@ const handlePhotoCaptured = async (imageBase64) => {
     }
   } catch (error) {
     showError.value = true
-    errorMessage.value = error.message || '考勤失败，请重试'
+    errorMessage.value = error.response?.data?.message || error.message || '考勤失败，请重试'
   } finally {
     isProcessing.value = false
   }

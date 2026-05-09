@@ -23,6 +23,8 @@ class CheckinResource(Resource):
         if not image_base64:
             return error_response('人脸图像数据不能为空', BizCode.MISSING_FIELD)
 
+        current_user = get_current_user()
+
         try:
             result, biz_code = self.attendance_service.checkin(
                 image_base64=image_base64,
@@ -30,7 +32,8 @@ class CheckinResource(Resource):
                 idempotency_key=idempotency_key,
                 device_id=device_id,
                 capture_time=capture_time,
-                frames_base64=frames_base64
+                frames_base64=frames_base64,
+                current_user=current_user
             )
 
             if biz_code == BizCode.SUCCESS:
@@ -43,7 +46,10 @@ class CheckinResource(Resource):
                     biz_code, result
                 )
             elif biz_code == BizCode.FACE_NOT_MATCHED:
-                return error_response('人脸比对失败，未匹配到学生', biz_code, result)
+                if current_user and current_user.role == 'student':
+                    return error_response('人脸比对失败，请使用本人账号签到', biz_code, result)
+                else:
+                    return error_response('人脸比对失败，未匹配到学生', biz_code, result)
             else:
                 return error_response('考勤失败', biz_code, result)
         except Exception as e:

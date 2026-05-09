@@ -18,7 +18,11 @@
             placeholder="班级" 
             class="class-input"
           />
-          <el-button type="primary" @click="handleAdd">
+          <el-button 
+            v-if="isTeacherOrAdmin" 
+            type="primary" 
+            @click="handleAdd"
+          >
             <el-icon><Plus /></el-icon>
             添加学生
           </el-button>
@@ -41,7 +45,7 @@
             {{ formatDateTime(scope.row.created_at) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="120">
+        <el-table-column label="操作" width="120" v-if="isTeacherOrAdmin">
           <template #default="scope">
             <el-button size="small" @click="handleEdit(scope.row)">编辑</el-button>
             <el-button size="small" type="danger" @click="handleDelete(scope.row)">删除</el-button>
@@ -70,7 +74,7 @@
         <el-form-item label="班级" :rules="[{ required: true, message: '请输入班级' }]">
           <el-input v-model="form.class_name"></el-input>
         </el-form-item>
-        <el-form-item label="人脸照片" v-if="!isEditing">
+        <el-form-item label="人脸照片">
           <input 
             type="file" 
             accept="image/jpeg,image/png" 
@@ -79,6 +83,9 @@
           />
           <div v-if="faceImagePreview" class="image-preview">
             <img :src="faceImagePreview" class="preview-img" />
+          </div>
+          <div v-if="isEditing && !faceImagePreview" class="image-tip">
+            <span class="text-gray">如需更新人脸照片，请选择新图片</span>
           </div>
         </el-form-item>
       </el-form>
@@ -99,13 +106,14 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { Search, Plus } from '@element-plus/icons-vue'
 import Loading from '../components/Common/Loading.vue'
 import ErrorAlert from '../components/Common/ErrorAlert.vue'
 import { create, list, update, remove } from '../api/student'
 import { formatDateTime } from '../utils/format'
 import { fileToBase64 } from '../utils/file'
+import { getCurrentUser } from '../api/auth'
 
 const loading = ref(false)
 const isProcessing = ref(false)
@@ -113,6 +121,8 @@ const showError = ref(false)
 const errorMessage = ref('')
 const showDialog = ref(false)
 const isEditing = ref(false)
+const isTeacherOrAdmin = ref(false)
+const currentUser = ref(null)
 
 const searchForm = reactive({
   keyword: '',
@@ -136,6 +146,18 @@ const form = reactive({
 const faceImagePreview = ref('')
 const faceImageBase64 = ref('')
 
+const fetchCurrentUser = async () => {
+  try {
+    const response = await getCurrentUser()
+    if (response.code === 200) {
+      currentUser.value = response.data
+      isTeacherOrAdmin.value = ['teacher', 'admin'].includes(response.data.role)
+    }
+  } catch (error) {
+    console.error('获取用户信息失败:', error)
+  }
+}
+
 const handleSearch = async () => {
   pagination.page = 1
   await loadStudents()
@@ -156,6 +178,8 @@ const handleEdit = (row) => {
   form.student_id = row.student_id
   form.name = row.name
   form.class_name = row.class_name
+  faceImagePreview.value = ''
+  faceImageBase64.value = ''
   showDialog.value = true
 }
 
@@ -220,7 +244,7 @@ const handleSubmit = async () => {
       class_name: form.class_name
     }
     
-    if (!isEditing.value) {
+    if (faceImageBase64.value) {
       data.face_image_base64 = faceImageBase64.value
     }
     
@@ -279,7 +303,10 @@ const loadStudents = async () => {
   }
 }
 
-loadStudents()
+onMounted(async () => {
+  await fetchCurrentUser()
+  await loadStudents()
+})
 </script>
 
 <style scoped>
@@ -326,5 +353,14 @@ loadStudents()
 .preview-img {
   width: 100%;
   border-radius: 8px;
+}
+
+.image-tip {
+  color: #999;
+  font-size: 12px;
+}
+
+.text-gray {
+  color: #999;
 }
 </style>

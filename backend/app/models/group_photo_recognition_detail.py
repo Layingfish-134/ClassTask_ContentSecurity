@@ -5,8 +5,8 @@ from app.config.database_config import db
 class GroupPhotoRecognitionDetail(db.Model):
     __tablename__ = 'group_photo_recognition_detail'
 
-    detail_id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
-    photo_id = db.Column(db.BigInteger, db.ForeignKey('group_photo_record.photo_id', ondelete='CASCADE'), nullable=False)
+    detail_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    photo_id = db.Column(db.Integer, db.ForeignKey('group_photo_record.photo_id', ondelete='CASCADE'), nullable=False)
     student_id = db.Column(db.String(20), db.ForeignKey('student_info.student_id', ondelete='SET NULL'), nullable=True)
     class_name = db.Column(db.String(50), nullable=True)
     status = db.Column(db.SmallInteger, nullable=False)

@@ -5,7 +5,7 @@ from app.config.database_config import db
 class AttendanceRecord(db.Model):
     __tablename__ = 'attendance_record'
 
-    record_id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    record_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     student_id = db.Column(db.String(20), db.ForeignKey('student_info.student_id', ondelete='SET NULL'), nullable=True)
     class_name = db.Column(db.String(50), nullable=True)
     status = db.Column(db.SmallInteger, nullable=False)

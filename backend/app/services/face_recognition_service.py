@@ -17,7 +17,7 @@ class FaceRecognitionService:
         self.multi_face_detector = MultiFaceDetector()
         self.emotion_classifier = EmotionClassifier()
 
-    def recognize_single_face(self, image_data):
+    def recognize_single_face(self, image_data, target_student_id=None):
         if isinstance(image_data, str):
             image = base64_to_image(image_data)
         elif isinstance(image_data, bytes):
@@ -31,10 +31,6 @@ class FaceRecognitionService:
         if image is None:
             return FaceMatchResult(matched=False), EmotionResult()
 
-        liveness_result = self.liveness_detector.detect_liveness(image)
-        if not liveness_result['is_live']:
-            return FaceMatchResult(matched=False), EmotionResult()
-
         face_result = self.feature_extractor.detect_face(image)
         if face_result is None:
             return FaceMatchResult(matched=False), EmotionResult()
@@ -43,7 +39,15 @@ class FaceRecognitionService:
         if feature is None:
             return FaceMatchResult(matched=False), EmotionResult()
 
-        students = StudentRepository.find_all_with_features()
+        if target_student_id:
+            student = StudentRepository.find_by_id(target_student_id)
+            if student and student.face_feature:
+                students = [student]
+            else:
+                return FaceMatchResult(matched=False), EmotionResult()
+        else:
+            students = StudentRepository.find_all_with_features()
+            
         match_result = self.face_matcher.find_best_match(feature, students)
 
         emotion_result = self.emotion_classifier.classify_emotion(face_result['face_image'])

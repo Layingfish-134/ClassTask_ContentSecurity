@@ -12,7 +12,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import PageHeader from './components/Common/PageHeader.vue'
 import PageFooter from './components/Common/PageFooter.vue'
 import AttendancePage from './views/AttendancePage.vue'
@@ -25,6 +25,12 @@ const currentPage = ref('attendance')
 const handleNavChange = (page) => {
   currentPage.value = page
 }
+
+onMounted(() => {
+  if (!localStorage.getItem('access_token')) {
+    window.location.href = '/login.html'
+  }
+})
 </script>
 
 <style scoped>

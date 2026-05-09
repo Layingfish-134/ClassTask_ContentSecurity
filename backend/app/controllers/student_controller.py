@@ -25,13 +25,24 @@ class StudentListResource(Resource):
             class_name = current_user.student_info.class_name if current_user.student_info else None
 
         try:
-            students, size, next_cursor, has_more = self.student_service.get_students(
+            page = args.get('page', 1)
+            size = args.get('size', 20)
+            students, total = self.student_service.get_students(
                 class_name=class_name,
                 keyword=args.get('keyword'),
-                cursor=args.get('cursor'),
-                size=args.get('size', 20)
+                page=page,
+                size=size
             )
-            return paginated_response(students, size, next_cursor, has_more)
+            return {
+                'code': 200,
+                'message': 'success',
+                'data': {
+                    'records': students,
+                    'total': total,
+                    'page': page,
+                    'size': size
+                }
+            }
         except Exception as e:
             return error_response(f'查询学生列表异常: {str(e)}', BizCode.INTERNAL_ERROR)
 

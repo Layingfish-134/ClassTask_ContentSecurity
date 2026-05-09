@@ -122,6 +122,48 @@ class AttendanceRecordRepository:
         return {'total_count': total, 'distribution': distribution}
 
     @staticmethod
+    def find_emotion_trend(class_name=None, student_id=None,
+                           source_type=None, start_time=None, end_time=None):
+        from app.models.emotion_record import EmotionRecord
+
+        query = EmotionRecord.query
+        if class_name:
+            query = query.filter(EmotionRecord.class_name == class_name)
+        if student_id:
+            query = query.filter(EmotionRecord.student_id == student_id)
+        if source_type:
+            query = query.filter(EmotionRecord.source_type == source_type)
+        if start_time:
+            try:
+                start_dt = datetime.fromisoformat(start_time)
+                query = query.filter(EmotionRecord.detected_at >= start_dt)
+            except (ValueError, TypeError):
+                pass
+        if end_time:
+            try:
+                end_dt = datetime.fromisoformat(end_time)
+                query = query.filter(EmotionRecord.detected_at <= end_dt)
+            except (ValueError, TypeError):
+                pass
+
+        records = query.filter(
+            EmotionRecord.emotion.isnot(None),
+            EmotionRecord.detected_at.isnot(None)
+        ).order_by(EmotionRecord.detected_at.asc()).all()
+
+        trend = {}
+        for record in records:
+            label = record.detected_at.strftime('%Y-%m-%d')
+            if label not in trend:
+                trend[label] = {}
+            trend[label][record.emotion] = trend[label].get(record.emotion, 0) + 1
+
+        return [
+            {'label': label, 'distribution': distribution}
+            for label, distribution in trend.items()
+        ]
+
+    @staticmethod
     def find_by_date_range(start_time, end_time, class_name=None):
         query = AttendanceRecord.query
         if class_name:

@@ -41,9 +41,12 @@ class FaceMatcher:
                 continue
 
             try:
-                stored_feature = json.loads(student.face_feature)
+                if isinstance(student.face_feature, str):
+                    stored_feature = json.loads(student.face_feature)
+                else:
+                    stored_feature = student.face_feature
                 stored_feature = np.array(stored_feature, dtype=np.float64)
-            except (json.JSONDecodeError, TypeError):
+            except (json.JSONDecodeError, TypeError, ValueError):
                 continue
 
             score = self.match_features(input_feature, stored_feature)

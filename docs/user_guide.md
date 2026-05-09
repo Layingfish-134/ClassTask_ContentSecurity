@@ -19,8 +19,8 @@
 
 ### 后端运行环境
 - Python 3.10+
-- MySQL 8.0+
 - 已安装相关依赖包
+- 当前版本默认使用本地 SQLite，数据库文件自动创建在 `backend/instance/attendance.db`
 
 ---
 
@@ -236,6 +236,26 @@ npm run dev
 |--------|------|
 | Ctrl + Enter | 快速拍照考勤 |
 | Esc | 关闭摄像头预览 |
+
+---
+
+## 十二、自动化验证
+
+在项目根目录可执行以下命令：
+
+```powershell
+venv\Scripts\python.exe -m unittest tests.test_backend_smoke
+powershell -ExecutionPolicy Bypass -File scripts\check_frontend_build.ps1
+powershell -ExecutionPolicy Bypass -File scripts\check_website_smoke.ps1
+```
+
+`check_website_smoke.ps1` 会临时启动测试用前后端服务并自动关闭，不会提交代码或访问远程仓库。
+
+首次使用空数据库时，先导入本地学生人脸库：
+
+```powershell
+venv\Scripts\python.exe scripts\import_face_data.py
+```
 
 ---
 

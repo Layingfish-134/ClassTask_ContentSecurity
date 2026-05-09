@@ -11,7 +11,7 @@
 | Flask-RESTful | 0.3.10 | RESTful API |
 | Flask-JWT-Extended | 4.7.x | JWT认证 |
 | Flask-SQLAlchemy | 3.1.x | ORM |
-| MySQL | 8.0+ | 关系型数据库 |
+| SQLite | 3.x | 本地关系型数据库 |
 | OpenCV | 4.x | 图像处理 |
 | MTCNN | 0.1.x | 人脸检测 |
 | Facenet-PyTorch | 2.5.x | 人脸特征提取 |
@@ -95,7 +95,7 @@ backend/
 
 | 文件 | 功能 |
 |------|------|
-| `database_config.py` | 读取环境变量配置MySQL连接，初始化SQLAlchemy，启动时自动建表 |
+| `database_config.py` | 配置本地 SQLite 数据库，初始化 SQLAlchemy，启动时自动建表 |
 | `file_storage_config.py` | 配置上传目录、文件大小限制、允许的文件格式 |
 
 ### 2. models/ — 数据模型模块
@@ -313,7 +313,6 @@ backend/
 ### 前置条件
 
 - Python 3.10+
-- MySQL 8.0+（需提前安装并启动）
 - pip 包管理器
 
 ### 第一步：安装Python依赖
@@ -331,33 +330,11 @@ pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
 
 ### 第二步：配置环境变量
 
-编辑 `backend/.env` 文件，修改数据库连接信息：
+通常无需额外配置数据库。当前代码使用本地 SQLite，数据库文件会自动创建在 `backend/instance/attendance.db`。
 
-```env
-DB_HOST=localhost
-DB_PORT=3306
-DB_NAME=attendance_db
-DB_USER=root
-DB_PASSWORD=你的MySQL密码
-```
+如需调整服务端口、JWT 密钥、上传目录或算法阈值，可编辑 `backend/.env`。
 
-### 第三步：初始化数据库
-
-方式一：使用SQL脚本（推荐）
-
-```bash
-mysql -u root -p < init_db.sql
-```
-
-方式二：启动应用时自动建表
-
-Flask-SQLAlchemy 配置了 `db.create_all()`，首次启动时会自动创建数据表（需确保数据库 `attendance_db` 已存在）。
-
-```sql
-CREATE DATABASE IF NOT EXISTS attendance_db DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
-
-### 第四步：启动后端服务
+### 第三步：启动后端服务
 
 ```bash
 cd backend
@@ -372,13 +349,13 @@ python run.py
  * Debugger is active!
 ```
 
-### 第五步：验证服务
+### 第四步：验证服务
 
 ```bash
 # 测试登录接口
 curl -X POST http://localhost:5000/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username": "admin", "password": "admin123"}'
+  -d '{"username": "admin", "password": "demo_hash_123456"}'
 ```
 
 成功返回JWT令牌即表示服务正常运行。
@@ -391,8 +368,33 @@ curl -X POST http://localhost:5000/api/auth/login \
 
 | 用户名 | 密码 | 角色 |
 |--------|------|------|
-| admin | admin123 | teacher |
-| teacher001 | 123456 | teacher |
+| admin | demo_hash_123456 | admin |
+| teacher01 | demo_hash_123456 | teacher |
+| 20240001 | demo_hash_123456 | student |
+
+---
+
+## 自动化测试
+
+在项目根目录执行：
+
+```powershell
+venv\Scripts\python.exe -m unittest tests.test_backend_smoke
+powershell -ExecutionPolicy Bypass -File scripts\check_frontend_build.ps1
+powershell -ExecutionPolicy Bypass -File scripts\check_website_smoke.ps1
+```
+
+其中 `check_website_smoke.ps1` 会临时使用 `5055` 和 `5174` 端口启动后端与前端，验证登录页、Vue 首页、Vite API 代理和情绪趋势接口，结束后自动关闭测试进程。
+
+## 导入本地人脸库
+
+如果 `backend/instance/attendance.db` 是空库，需要先导入 `backend/uploads/face_data` 下的学生照片：
+
+```powershell
+venv\Scripts\python.exe scripts\import_face_data.py
+```
+
+文件名需尽量遵循 `学号-姓名-班级-性别.jpg` 格式。导入脚本会提取人脸特征并写入 `student_info`，同时创建学生账号，默认密码为 `demo_hash_123456`。
 
 ---
 
@@ -437,7 +439,7 @@ models/
 ```bash
 curl -X POST http://localhost:5000/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username": "admin", "password": "admin123"}'
+  -d '{"username": "admin", "password": "demo_hash_123456"}'
 ```
 
 ### 新增学生（含人脸录入）
@@ -500,7 +502,7 @@ curl -X GET "http://localhost:5000/api/reports/attendance/export?start_time=2024
 
 ### Q: 启动时数据库连接失败？
 
-检查 `.env` 中的数据库配置是否正确，确保MySQL已启动，且数据库 `attendance_db` 已创建。
+检查 `backend/instance/attendance.db` 所在目录是否可写；当前版本使用 SQLite，启动时会自动创建数据库和表。
 
 ### Q: MTCNN/FaceNet下载慢或失败？
 
