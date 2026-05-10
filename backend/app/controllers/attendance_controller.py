@@ -1,8 +1,8 @@
 from flask_restful import Resource
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required
 from app.services.attendance_service import AttendanceService
 from app.dto.request.parsers import checkin_parser, attendance_query_parser
-from app.dto.response.common import success_response, error_response, paginated_response, BizCode
+from app.dto.response.common import success_response, error_response, BizCode
 from app.utils.permission import get_current_user, enforce_student_data_access
 
 
@@ -68,16 +68,22 @@ class AttendanceRecordResource(Resource):
             return err
 
         try:
-            records, size, next_cursor, has_more = self.attendance_service.get_attendance_records(
+            records, total, page, size = self.attendance_service.get_attendance_records(
                 student_id=args.get('student_id') if (not current_user or current_user.role != 'student') else current_user.student_id,
                 class_name=args.get('class_name'),
                 start_time=args.get('start_time'),
                 end_time=args.get('end_time'),
                 status=args.get('status'),
-                cursor=args.get('cursor'),
+                keyword=args.get('keyword'),
+                page=args.get('page', 1),
                 size=args.get('size', 20),
                 current_user=current_user
             )
-            return paginated_response(records, size, next_cursor, has_more)
+            return success_response({
+                'records': records,
+                'total': total,
+                'page': page,
+                'size': size
+            })
         except Exception as e:
             return error_response(f'查询考勤记录异常: {str(e)}', BizCode.INTERNAL_ERROR)
