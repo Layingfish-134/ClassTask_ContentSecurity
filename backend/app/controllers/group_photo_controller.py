@@ -1,5 +1,5 @@
 from flask_restful import Resource
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required
 from app.services.report_service import ReportService
 from app.dto.request.parsers import group_photo_parser, group_photo_query_parser
 from app.dto.response.common import success_response, error_response, paginated_response, BizCode
@@ -13,7 +13,7 @@ class GroupPhotoRecognizeResource(Resource):
     @jwt_required()
     def post(self):
         args = group_photo_parser.parse_args()
-        photo_base64 = args['photo_base64']
+        photo_base64 = args.get('photo_base64') or args.get('image_base64')
         image_format = args['image_format']
         photo_name = args.get('photo_name', '')
         activity_name = args.get('activity_name', '')

@@ -14,6 +14,20 @@ const redirectToLogin = () => {
   }
 }
 
+const getApiErrorMessage = (data, fallback) => {
+  if (!data) return fallback
+  if (typeof data === 'string') return data
+  if (data.message) {
+    if (typeof data.message === 'string') return data.message
+    if (typeof data.message === 'object') {
+      return Object.values(data.message).flat().join(', ') || fallback
+    }
+  }
+  if (data.msg) return data.msg
+  if (data.error) return data.error
+  return fallback
+}
+
 instance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('access_token')
@@ -39,6 +53,14 @@ instance.interceptors.response.use(
       if (isAuthError) {
         redirectToLogin()
       }
+      const message = getApiErrorMessage(data, `请求失败（HTTP ${status}）`)
+      const apiError = new Error(message)
+      apiError.status = status
+      apiError.code = data.code
+      apiError.data = data.data
+      apiError.requestId = data.request_id
+      apiError.response = error.response
+      return Promise.reject(apiError)
     }
     return Promise.reject(error)
   }

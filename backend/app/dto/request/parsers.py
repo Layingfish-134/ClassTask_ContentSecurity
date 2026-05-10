@@ -1,5 +1,6 @@
 from flask_restful import reqparse
 
+
 checkin_parser = reqparse.RequestParser()
 checkin_parser.add_argument('image_base64', type=str, required=True, help='人脸图像Base64编码不能为空')
 checkin_parser.add_argument('image_format', type=str, required=True, help='图像格式不能为空')
@@ -18,7 +19,8 @@ attendance_query_parser.add_argument('cursor', type=str, location='args')
 attendance_query_parser.add_argument('size', type=int, default=20, location='args')
 
 group_photo_parser = reqparse.RequestParser()
-group_photo_parser.add_argument('photo_base64', type=str, required=True, help='合照图像Base64编码不能为空')
+group_photo_parser.add_argument('photo_base64', type=str, default=None)
+group_photo_parser.add_argument('image_base64', type=str, default=None)
 group_photo_parser.add_argument('image_format', type=str, required=True, help='图像格式不能为空')
 group_photo_parser.add_argument('photo_name', type=str, default='')
 group_photo_parser.add_argument('activity_name', type=str, default='')
