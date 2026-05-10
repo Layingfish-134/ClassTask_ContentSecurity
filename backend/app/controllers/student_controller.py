@@ -194,3 +194,33 @@ class StudentBatchImportExcelResource(Resource):
             return success_response(result, '批量导入全部成功')
         except Exception as e:
             return error_response(f'Excel导入异常: {str(e)}', BizCode.INTERNAL_ERROR)
+
+
+class StudentBatchImportPhotoZipResource(Resource):
+    def __init__(self):
+        self.student_service = StudentService()
+
+    @jwt_required()
+    def post(self):
+        current_user = get_current_user()
+        if not current_user or current_user.role not in ('teacher', 'admin'):
+            return error_response('无权限执行此操作', BizCode.FORBIDDEN)
+
+        if 'file' not in request.files:
+            return error_response('请上传学生照片压缩包', BizCode.MISSING_FIELD)
+
+        file = request.files['file']
+        if not file.filename:
+            return error_response('请上传学生照片压缩包', BizCode.MISSING_FIELD)
+        if not file.filename.lower().endswith('.zip'):
+            return error_response('仅支持 zip 格式压缩包', BizCode.UNSUPPORTED_FORMAT)
+
+        try:
+            result = self.student_service.batch_import_photo_zip(file)
+            if result['fail_count'] > 0:
+                return success_response(result, '批量导入部分成功')
+            return success_response(result, '批量导入全部成功')
+        except ValueError as e:
+            return error_response(str(e), BizCode.ZIP_FORMAT_ERROR)
+        except Exception as e:
+            return error_response(f'学生照片批量导入异常: {str(e)}', BizCode.INTERNAL_ERROR)

@@ -87,7 +87,8 @@ def _register_routes(api):
     from app.controllers.attendance_controller import CheckinResource, AttendanceRecordResource
     from app.controllers.student_controller import (
         StudentListResource, StudentDetailResource,
-        StudentBatchImportResource, StudentBatchImportExcelResource
+        StudentBatchImportResource, StudentBatchImportExcelResource,
+        StudentBatchImportPhotoZipResource
     )
     from app.controllers.group_photo_controller import GroupPhotoRecognizeResource, GroupPhotoRecordResource
     from app.controllers.emotion_controller import EmotionStatisticsResource, EmotionTrendResource
@@ -110,6 +111,7 @@ def _register_routes(api):
     api.add_resource(StudentDetailResource, '/students/<string:student_id>')
     api.add_resource(StudentBatchImportResource, '/students/batch-import')
     api.add_resource(StudentBatchImportExcelResource, '/students/batch-import/excel')
+    api.add_resource(StudentBatchImportPhotoZipResource, '/students/batch-import/photos')
 
     api.add_resource(GroupPhotoRecognizeResource, '/group-photo/recognize')
     api.add_resource(GroupPhotoRecordResource, '/group-photo/records')
