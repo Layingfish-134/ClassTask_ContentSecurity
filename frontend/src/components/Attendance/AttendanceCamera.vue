@@ -6,6 +6,24 @@
         <el-icon size="64" class="placeholder-icon"><VideoCamera /></el-icon>
         <p>点击下方按钮开启摄像头</p>
       </div>
+      <div v-if="isPreviewing && isAutoMode" class="auto-mode-indicator">
+        <el-icon size="24" class="indicator-icon"><CircleCheck /></el-icon>
+        <span>自动识别模式</span>
+        <div v-if="faceDetected" class="face-detected-badge">
+          <el-icon><User /></el-icon>
+          <span>检测到人脸</span>
+        </div>
+      </div>
+    </div>
+    <div class="mode-switch">
+      <span class="switch-label">签到模式：</span>
+      <el-switch
+        v-model="isAutoMode"
+        :disabled="isProcessing || !isPreviewing"
+        active-text="自动识别"
+        inactive-text="手动拍照"
+        @change="handleModeChange"
+      />
     </div>
     <div class="camera-controls">
       <el-button 
@@ -27,7 +45,7 @@
         关闭摄像头
       </el-button>
       <el-button 
-        :disabled="!isPreviewing || isProcessing"
+        :disabled="!isPreviewing || isProcessing || isAutoMode"
         @click="handleCapture" 
         type="success"
         :loading="isProcessing"
@@ -40,16 +58,20 @@
 </template>
 
 <script setup>
-import { ref, onUnmounted } from 'vue'
-import { VideoCamera, Camera, Close } from '@element-plus/icons-vue'
-import { initCamera, startPreview, capturePhoto, stopCamera } from '../../utils/camera'
+import { ref, onUnmounted, watch } from 'vue'
+import { VideoCamera, Camera, Close, CircleCheck, User } from '@element-plus/icons-vue'
+import { initCamera, startPreview, capturePhoto, stopCamera, detectFace } from '../../utils/camera'
 
 const emit = defineEmits(['photo-captured', 'error'])
 
 const videoRef = ref(null)
 const isPreviewing = ref(false)
 const isProcessing = ref(false)
+const isAutoMode = ref(false)
+const faceDetected = ref(false)
+const autoDetecting = ref(false)
 let stream = null
+let detectionInterval = null
 
 const handleStartPreview = async () => {
   try {
@@ -57,6 +79,9 @@ const handleStartPreview = async () => {
     if (videoRef.value) {
       startPreview(videoRef.value, stream)
       isPreviewing.value = true
+      if (isAutoMode.value) {
+        startFaceDetection()
+      }
     }
   } catch (error) {
     emit('error', error)
@@ -64,16 +89,20 @@ const handleStartPreview = async () => {
 }
 
 const handleStopPreview = () => {
+  stopFaceDetection()
   stopCamera(stream)
   isPreviewing.value = false
+  isProcessing.value = false
+  faceDetected.value = false
+  autoDetecting.value = false
   stream = null
 }
 
 const handleCapture = async () => {
   if (!videoRef.value || !isPreviewing.value) return
-  
+
   isProcessing.value = true
-  
+
   try {
     const imageBase64 = capturePhoto(videoRef.value)
     emit('photo-captured', imageBase64)
@@ -84,7 +113,63 @@ const handleCapture = async () => {
   }
 }
 
+const handleModeChange = (value) => {
+  if (value) {
+    startFaceDetection()
+  } else {
+    stopFaceDetection()
+    faceDetected.value = false
+  }
+}
+
+const startFaceDetection = () => {
+  if (!isPreviewing.value || detectionInterval) return
+
+  autoDetecting.value = true
+  detectionInterval = setInterval(async () => {
+    if (!videoRef.value || isProcessing.value || !autoDetecting.value) return
+
+    try {
+      const result = await detectFace(videoRef.value)
+      faceDetected.value = result.detected
+
+      if (result.detected && !isProcessing.value && autoDetecting.value) {
+        autoDetecting.value = false
+        const imageBase64 = capturePhoto(videoRef.value)
+        emit('photo-captured', imageBase64)
+
+        setTimeout(() => {
+          if (isAutoMode.value && isPreviewing.value) {
+            autoDetecting.value = true
+            faceDetected.value = false
+          }
+        }, 12000)
+      }
+    } catch (error) {
+      console.error('人脸检测失败:', error)
+    }
+  }, 2000)
+}
+
+const stopFaceDetection = () => {
+  if (detectionInterval) {
+    clearInterval(detectionInterval)
+    detectionInterval = null
+  }
+  autoDetecting.value = false
+}
+
+watch(isAutoMode, (newVal) => {
+  if (newVal && isPreviewing.value) {
+    startFaceDetection()
+  } else {
+    stopFaceDetection()
+    faceDetected.value = false
+  }
+})
+
 onUnmounted(() => {
+  stopFaceDetection()
   stopCamera(stream)
 })
 </script>
@@ -130,6 +215,73 @@ onUnmounted(() => {
 .placeholder-icon {
   margin-bottom: 16px;
   opacity: 0.5;
+}
+
+.auto-mode-indicator {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 20px;
+  color: #52c41a;
+  font-size: 14px;
+}
+
+.indicator-icon {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.face-detected-badge {
+  position: absolute;
+  top: 50px;
+  left: 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: rgba(82, 196, 26, 0.9);
+  border-radius: 16px;
+  color: #fff;
+  font-size: 12px;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.mode-switch {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  background: #f5f5f5;
+  border-radius: 8px;
+}
+
+.switch-label {
+  font-size: 14px;
+  color: #666;
 }
 
 .camera-controls {

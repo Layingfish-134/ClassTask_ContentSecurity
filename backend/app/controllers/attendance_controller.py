@@ -66,6 +66,8 @@ class AttendanceRecordResource(Resource):
         current_user, err = enforce_student_data_access(args.get('student_id'))
         if err:
             return err
+        if current_user and current_user.role == 'student':
+            return error_response('学生账号仅允许实时签到，不能查询考勤记录', BizCode.FORBIDDEN)
 
         try:
             records, total, page, size = self.attendance_service.get_attendance_records(

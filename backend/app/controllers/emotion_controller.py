@@ -14,13 +14,11 @@ class EmotionStatisticsResource(Resource):
     def get(self):
         args = emotion_query_parser.parse_args()
         current_user = get_current_user()
+        if current_user and current_user.role == 'student':
+            return error_response('学生账号无权进入数据分析', BizCode.FORBIDDEN)
 
         class_name = args.get('class_name')
         student_id = args.get('student_id')
-
-        if current_user and current_user.role == 'student':
-            student_id = current_user.student_id
-            class_name = None
 
         try:
             result = self.report_service.get_emotion_statistics(
@@ -43,13 +41,11 @@ class EmotionTrendResource(Resource):
     def get(self):
         args = emotion_query_parser.parse_args()
         current_user = get_current_user()
+        if current_user and current_user.role == 'student':
+            return error_response('学生账号无权进入数据分析', BizCode.FORBIDDEN)
 
         class_name = args.get('class_name')
         student_id = args.get('student_id')
-
-        if current_user and current_user.role == 'student':
-            student_id = current_user.student_id
-            class_name = None
 
         try:
             result = self.report_service.get_emotion_trend(

@@ -14,7 +14,8 @@
       @retry="handleRetry" 
     />
     
-    <AttendanceRecord 
+    <AttendanceRecord
+      v-if="!isStudent"
       :records="records"
       :loading="loading"
       :pagination="pagination"
@@ -40,6 +41,7 @@ import AttendanceRecord from '../components/Attendance/AttendanceRecord.vue'
 import Loading from '../components/Common/Loading.vue'
 import ErrorAlert from '../components/Common/ErrorAlert.vue'
 import { checkin, getRecords } from '../api/attendance'
+import { getCurrentUser } from '../api/auth'
 
 const showResult = ref(false)
 const attendanceResult = ref(null)
@@ -47,6 +49,7 @@ const isProcessing = ref(false)
 const showError = ref(false)
 const errorMessage = ref('')
 const loading = ref(false)
+const isStudent = ref(false)
 
 const records = ref([])
 const pagination = reactive({
@@ -65,7 +68,9 @@ const handlePhotoCaptured = async (imageBase64) => {
       attendanceResult.value = response.data
       showResult.value = true
       errorMessage.value = ''
-      await loadRecords()
+      if (!isStudent.value) {
+        await loadRecords()
+      }
     } else {
       attendanceResult.value = { status: 0 }
       showResult.value = true
@@ -102,6 +107,12 @@ const handlePageChange = async (params) => {
 }
 
 const loadRecords = async (params = {}) => {
+  if (isStudent.value) {
+    records.value = []
+    pagination.total = 0
+    return
+  }
+
   loading.value = true
   
   try {
@@ -122,8 +133,19 @@ const loadRecords = async (params = {}) => {
   }
 }
 
-onMounted(() => {
-  loadRecords()
+onMounted(async () => {
+  try {
+    const response = await getCurrentUser()
+    if (response.code === 200) {
+      isStudent.value = response.data.role === 'student'
+    }
+  } catch (error) {
+    console.error('获取用户信息失败:', error)
+  }
+
+  if (!isStudent.value) {
+    loadRecords()
+  }
 })
 </script>
 

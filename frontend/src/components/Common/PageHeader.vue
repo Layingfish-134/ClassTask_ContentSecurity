@@ -14,11 +14,11 @@
             <el-icon><Picture /></el-icon>
             <span>合照识别</span>
           </el-menu-item>
-          <el-menu-item index="analysis" @click="handleNavClick('analysis')">
+          <el-menu-item v-if="!isStudent" index="analysis" @click="handleNavClick('analysis')">
             <el-icon><PieChart /></el-icon>
             <span>数据分析</span>
           </el-menu-item>
-          <el-menu-item index="student" @click="handleNavClick('student')">
+          <el-menu-item v-if="!isStudent" index="student" @click="handleNavClick('student')">
             <el-icon><User /></el-icon>
             <span>学生管理</span>
           </el-menu-item>
@@ -42,21 +42,28 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { VideoCamera, Picture, PieChart, User } from '@element-plus/icons-vue'
 import { getCurrentUser } from '../../api/auth'
 
-defineProps({
+const props = defineProps({
   currentNav: {
     type: String,
     default: 'attendance'
+  },
+  userRole: {
+    type: String,
+    default: ''
   }
 })
 
 const emit = defineEmits(['nav-change'])
 const username = ref('')
+const localRole = ref('')
+const isStudent = computed(() => (props.userRole || localRole.value) === 'student')
 
 const handleNavClick = (nav) => {
+  if (isStudent.value && ['analysis', 'student'].includes(nav)) return
   emit('nav-change', nav)
 }
 
@@ -80,6 +87,7 @@ onMounted(async () => {
     const response = await getCurrentUser()
     if (response.code === 200) {
       username.value = response.data.username
+      localRole.value = response.data.role
     }
   } catch (error) {
     console.error('获取用户信息失败:', error)

@@ -20,9 +20,10 @@ class StudentListResource(Resource):
         if not current_user:
             return error_response('未登录', BizCode.UNAUTHORIZED)
 
-        class_name = args.get('class_name')
         if current_user.role == 'student':
-            class_name = current_user.student_info.class_name if current_user.student_info else None
+            return error_response('学生账号无权进入学生管理', BizCode.FORBIDDEN)
+
+        class_name = args.get('class_name')
 
         try:
             page = args.get('page', 1)
@@ -79,8 +80,8 @@ class StudentDetailResource(Resource):
         current_user = get_current_user()
         if not current_user:
             return error_response('未登录', BizCode.UNAUTHORIZED)
-        if current_user.role == 'student' and current_user.student_id != student_id:
-            return error_response('无权限查看其他学生信息', BizCode.FORBIDDEN)
+        if current_user.role == 'student':
+            return error_response('学生账号无权进入学生管理', BizCode.FORBIDDEN)
 
         student = self.student_service.get_student_by_id(student_id)
         if not student:

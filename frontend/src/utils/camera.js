@@ -53,18 +53,53 @@ export const detectFace = (videoElement) => {
     
     let brightnessSum = 0
     let pixelCount = 0
-    
+    let skinPixelCount = 0
+
     for (let i = 0; i < pixels.length; i += 4) {
-      const brightness = (pixels[i] * 0.299 + pixels[i + 1] * 0.587 + pixels[i + 2] * 0.114)
+      const r = pixels[i]
+      const g = pixels[i + 1]
+      const b = pixels[i + 2]
+
+      const brightness = (r * 0.299 + g * 0.587 + b * 0.114)
       brightnessSum += brightness
       pixelCount++
+
+      if (isSkinColor(r, g, b)) {
+        skinPixelCount++
+      }
     }
-    
+
     const avgBrightness = brightnessSum / pixelCount
-    
+    const skinRatio = skinPixelCount / pixelCount
+
+    const brightnessDetected = avgBrightness > 50
+    const skinDetected = skinRatio > 0.02
+
     resolve({
-      detected: avgBrightness > 50,
-      brightness: avgBrightness
+      detected: brightnessDetected && skinDetected,
+      brightness: avgBrightness,
+      skinRatio: skinRatio,
+      confidence: Math.min(brightnessDetected * 0.5 + skinDetected * 0.5, 1)
     })
   })
+}
+
+const isSkinColor = (r, g, b) => {
+  if (r < 95 || g < 40 || b < 20) return false
+
+  const maxRGB = Math.max(r, g, b)
+  const minRGB = Math.min(r, g, b)
+
+  const delta = maxRGB - minRGB
+
+  if (delta < 15) return false
+  if (r / maxRGB < 0.62 || g / maxRGB < 0.51) return false
+
+  const rG = r - g
+  if (rG < 10 || rG > 45) return false
+
+  const rbDiff = Math.abs(r - b)
+  if (rbDiff < 10) return false
+
+  return true
 }

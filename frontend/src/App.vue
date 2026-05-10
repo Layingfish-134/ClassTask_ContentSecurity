@@ -1,6 +1,6 @@
 <template>
   <div class="app-container">
-    <PageHeader @nav-change="handleNavChange" />
+    <PageHeader :current-nav="currentPage" :user-role="userRole" @nav-change="handleNavChange" />
     <main class="main-content">
       <AttendancePage v-if="currentPage === 'attendance'" />
       <GroupPhotoPage v-else-if="currentPage === 'groupPhoto'" />
@@ -19,18 +19,39 @@ import AttendancePage from './views/AttendancePage.vue'
 import GroupPhotoPage from './views/GroupPhotoPage.vue'
 import AnalysisPage from './views/AnalysisPage.vue'
 import StudentPage from './views/StudentPage.vue'
+import { getCurrentUser } from './api/auth'
 
 const currentPage = ref('attendance')
+const userRole = ref('')
+
+const studentBlockedPages = ['analysis', 'student']
 
 const handleNavChange = (page) => {
+  if (userRole.value === 'student' && studentBlockedPages.includes(page)) {
+    currentPage.value = 'attendance'
+    return
+  }
   currentPage.value = page
 }
 
-onMounted(() => {
+onMounted(async () => {
   localStorage.removeItem('access_token')
   localStorage.removeItem('refresh_token')
   if (!sessionStorage.getItem('access_token')) {
     window.location.href = '/login.html'
+    return
+  }
+
+  try {
+    const response = await getCurrentUser()
+    if (response.code === 200) {
+      userRole.value = response.data.role
+      if (userRole.value === 'student' && studentBlockedPages.includes(currentPage.value)) {
+        currentPage.value = 'attendance'
+      }
+    }
+  } catch (error) {
+    console.error('获取用户信息失败:', error)
   }
 })
 </script>
