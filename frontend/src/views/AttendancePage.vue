@@ -2,6 +2,7 @@
   <div class="attendance-page">
     <el-card title="实时考勤" class="main-card">
       <AttendanceCamera 
+        :processing="isProcessing"
         @photo-captured="handlePhotoCaptured" 
         @error="handleCameraError" 
       />
