@@ -47,7 +47,7 @@ class FaceRecognitionService:
                 return FaceMatchResult(matched=False), EmotionResult()
         else:
             students = StudentRepository.find_all_with_features()
-            
+
         match_result = self.face_matcher.find_best_match(feature, students)
 
         emotion_result = self.emotion_classifier.classify_emotion(face_result['face_image'])

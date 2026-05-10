@@ -18,7 +18,7 @@
       </el-select>
       <el-input 
         v-model="searchForm.class_name" 
-        placeholder="专业" 
+        placeholder="专业"
         class="class-input"
       />
       <el-button type="primary" @click="handleSearch">查询</el-button>

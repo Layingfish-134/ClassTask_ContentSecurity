@@ -1,5 +1,5 @@
 from flask_restful import Resource
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required
 from app.services.report_service import ReportService
 from app.dto.request.parsers import group_photo_parser, group_photo_query_parser
 from app.dto.response.common import success_response, error_response, paginated_response, BizCode

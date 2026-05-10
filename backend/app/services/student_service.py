@@ -38,7 +38,7 @@ class StudentService:
 
         user_username = username if username else student_id
         user_password = password if password else '123456'
-        
+
         existing_user = User.query.filter_by(username=user_username).first()
         if existing_user:
             raise ValueError(f'用户名 {user_username} 已存在')

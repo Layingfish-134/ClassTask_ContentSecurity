@@ -1,6 +1,6 @@
 # 专业考勤系统
 
-一个基于人脸识别的课堂考勤与活动管理系统，包含实时考勤、合照识别、学生管理、情绪统计、Excel 报表导出等功能。项目采用前后端分离结构：前端使用 Vue 3 + Element Plus，后端使用 Flask + SQLite，并集成 MTCNN、FaceNet、OpenCV、PyTorch 等图像识别能力。
+一个基于人脸识别的课堂考勤与活动管理系统，包含实时考勤、合照识别、学生管理、情绪统计、Excel 报表导出等功能。项目采用前后端分离结构：前端使用 Vue 3 + Element Plus，后端使用 Flask + MySQL，并集成 MTCNN、FaceNet、OpenCV、PyTorch 等图像识别能力。
 
 ## 功能特性
 
@@ -18,7 +18,7 @@
 | --- | --- |
 | 前端 | Vue 3, Vite, Element Plus, Axios, Chart.js |
 | 后端 | Python, Flask, Flask-RESTful, Flask-JWT-Extended, Flask-SQLAlchemy |
-| 数据库 | SQLite |
+| 数据库 | MySQL |
 | 人脸检测 | facenet-pytorch MTCNN, OpenCV Haar fallback |
 | 特征提取 | InceptionResnetV1 pretrained on VGGFace2 |
 | 情绪分析 | Transformers/PyTorch 模型，失败时使用简易规则降级 |
@@ -48,6 +48,8 @@ Task-6/
 cd backend
 pip install -r requirements.txt
 ```
+
+启动前请确认 MySQL 已创建数据库，并在 `backend/.env` 中配置 `DB_HOST`、`DB_PORT`、`DB_NAME`、`DB_USER`、`DB_PASSWORD`。
 
 如使用项目自带虚拟环境，可在根目录使用：
 
@@ -123,7 +125,7 @@ venv\Scripts\python.exe scripts\import_face_data.py
 
 ## 数据与文件说明
 
-- `backend/instance/attendance.db`：SQLite 数据库文件，运行后生成。
+- MySQL 数据库：默认数据库名为 `attendance_db`，连接信息在 `backend/.env` 中配置。
 - `backend/uploads/face_data`：学生人脸库原始照片。
 - `backend/uploads`：考勤照片、合照上传文件保存目录。
 - `backend/models`：本地模型文件目录。

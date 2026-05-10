@@ -1,5 +1,6 @@
 from flask_restful import reqparse
 
+
 checkin_parser = reqparse.RequestParser()
 checkin_parser.add_argument('image_base64', type=str, required=True, help='人脸图像Base64编码不能为空')
 checkin_parser.add_argument('image_format', type=str, required=True, help='图像格式不能为空')

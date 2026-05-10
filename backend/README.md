@@ -11,7 +11,7 @@
 | Flask-RESTful | 0.3.10 | RESTful API |
 | Flask-JWT-Extended | 4.7.x | JWT认证 |
 | Flask-SQLAlchemy | 3.1.x | ORM |
-| SQLite | 3.x | 本地关系型数据库 |
+| MySQL | 8.x | 关系型数据库 |
 | OpenCV | 4.x | 图像处理 |
 | MTCNN | 0.1.x | 人脸检测 |
 | Facenet-PyTorch | 2.5.x | 人脸特征提取 |
@@ -95,7 +95,7 @@ backend/
 
 | 文件 | 功能 |
 |------|------|
-| `database_config.py` | 配置本地 SQLite 数据库，初始化 SQLAlchemy，启动时自动建表 |
+| `database_config.py` | 配置 MySQL 数据库连接，初始化 SQLAlchemy，启动时自动建表 |
 | `file_storage_config.py` | 配置上传目录、文件大小限制、允许的文件格式 |
 
 ### 2. models/ — 数据模型模块
@@ -330,7 +330,7 @@ pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
 
 ### 第二步：配置环境变量
 
-通常无需额外配置数据库。当前代码使用本地 SQLite，数据库文件会自动创建在 `backend/instance/attendance.db`。
+当前代码使用 MySQL。启动前请先创建 `attendance_db` 数据库，并在 `backend/.env` 中配置 `DB_HOST`、`DB_PORT`、`DB_NAME`、`DB_USER`、`DB_PASSWORD`。
 
 如需调整服务端口、JWT 密钥、上传目录或算法阈值，可编辑 `backend/.env`。
 
@@ -374,27 +374,15 @@ curl -X POST http://localhost:5000/api/auth/login \
 
 ---
 
-## 自动化测试
-
-在项目根目录执行：
-
-```powershell
-venv\Scripts\python.exe -m unittest tests.test_backend_smoke
-powershell -ExecutionPolicy Bypass -File scripts\check_frontend_build.ps1
-powershell -ExecutionPolicy Bypass -File scripts\check_website_smoke.ps1
-```
-
-其中 `check_website_smoke.ps1` 会临时使用 `5055` 和 `5174` 端口启动后端与前端，验证登录页、Vue 首页、Vite API 代理和情绪趋势接口，结束后自动关闭测试进程。
-
 ## 导入本地人脸库
 
-如果 `backend/instance/attendance.db` 是空库，需要先导入 `backend/uploads/face_data` 下的学生照片：
+如果 MySQL 数据库为空，需要先导入 `backend/uploads/face_data` 下的学生照片：
 
 ```powershell
 venv\Scripts\python.exe scripts\import_face_data.py
 ```
 
-文件名需尽量遵循 `学号-姓名-专业-性别.jpg` 格式。导入脚本会提取人脸特征并写入 `student_info`，同时创建学生账号，默认密码为 `demo_hash_123456`。
+文件名需尽量遵循 `学号-姓名-专业-性别.jpg` 格式。导入脚本会提取人脸特征并写入 `student_info`，同时创建学生账号，默认密码为 `123456`。
 
 ---
 
@@ -502,7 +490,7 @@ curl -X GET "http://localhost:5000/api/reports/attendance/export?start_time=2024
 
 ### Q: 启动时数据库连接失败？
 
-检查 `backend/instance/attendance.db` 所在目录是否可写；当前版本使用 SQLite，启动时会自动创建数据库和表。
+检查 MySQL 服务是否已启动、`backend/.env` 中的连接参数是否正确，以及 `attendance_db` 数据库是否已创建；应用启动时会自动创建表。
 
 ### Q: MTCNN/FaceNet下载慢或失败？
 

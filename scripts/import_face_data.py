@@ -22,7 +22,7 @@ from app.services.face_feature_extractor import FaceFeatureExtractor  # noqa: E4
 
 
 IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png'}
-DEFAULT_PASSWORD = 'demo_hash_123456'
+DEFAULT_PASSWORD = '123456'
 
 
 def parse_student_filename(filename):
@@ -117,7 +117,7 @@ def import_face_data(face_dir, limit=None):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Import local face_data photos into the SQLite student table.')
+    parser = argparse.ArgumentParser(description='Import local face_data photos into the MySQL student table.')
     parser.add_argument('--face-dir', default=os.path.join(BACKEND_ROOT, 'uploads', 'face_data'))
     parser.add_argument('--limit', type=int, default=None)
     args = parser.parse_args()

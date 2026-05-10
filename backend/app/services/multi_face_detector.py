@@ -1,6 +1,7 @@
+import os
+
 import cv2
 import numpy as np
-import os
 import torch
 
 try:
@@ -44,8 +45,8 @@ class MultiFaceDetector:
 
         if self.detector is not None:
             return self._detect_mtcnn(image)
-        else:
-            return self._detect_opencv(image)
+
+        return self._detect_opencv(image)
 
     def _detect_mtcnn(self, image):
         rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -58,16 +59,19 @@ class MultiFaceDetector:
         faces = []
         for index, box in enumerate(boxes):
             x1, y1, x2, y2 = self._clip_box(box, image.shape)
-
             face_image = image[y1:y2, x1:x2]
             if face_image.size == 0:
                 continue
+
+            aligned_tensor = None
+            if aligned_tensors is not None and index < len(aligned_tensors):
+                aligned_tensor = aligned_tensors[index]
 
             faces.append({
                 'box': (x1, y1, x2, y2),
                 'confidence': float(probs[index]),
                 'face_image': face_image,
-                'aligned_tensor': aligned_tensors[index] if aligned_tensors is not None else None,
+                'aligned_tensor': aligned_tensor,
                 'keypoints': landmarks[index].tolist() if landmarks is not None else {}
             })
 

@@ -5,7 +5,7 @@ from app.config.database_config import db
 class GroupPhotoRecord(db.Model):
     __tablename__ = 'group_photo_record'
 
-    photo_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    photo_id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     photo_name = db.Column(db.String(255), nullable=False)
     photo_path = db.Column(db.String(255), nullable=False)
     activity_name = db.Column(db.String(100), nullable=True)
