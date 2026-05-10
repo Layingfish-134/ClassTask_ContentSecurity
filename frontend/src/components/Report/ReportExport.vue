@@ -4,7 +4,8 @@
       <el-form-item label="报表类型">
         <el-select v-model="form.reportType" placeholder="请选择报表类型">
           <el-option label="考勤报表" value="attendance"></el-option>
-          <el-option label="活动频次报表" value="activityFrequency"></el-option>
+          <el-option label="学生活动参与报表" value="studentActivity"></el-option>
+          <el-option label="活动记录报表" value="activityRecord"></el-option>
         </el-select>
       </el-form-item>
       
@@ -28,6 +29,14 @@
         />
       </el-form-item>
       
+      <el-form-item label="学生学号" v-if="form.reportType === 'studentActivity'" required>
+        <el-input v-model="form.student_id" placeholder="请输入学生学号"></el-input>
+      </el-form-item>
+
+      <el-form-item label="活动名称" v-if="form.reportType === 'activityRecord'" required>
+        <el-input v-model="form.activity_name" placeholder="请输入活动名称"></el-input>
+      </el-form-item>
+      
       <el-form-item>
         <el-button 
           type="primary" 
@@ -45,7 +54,7 @@
 <script setup>
 import { reactive, ref } from 'vue'
 import { Download } from '@element-plus/icons-vue'
-import { exportAttendance, exportActivityFrequency } from '../../api/report'
+import { exportAttendanceSummary, exportStudentActivity, exportActivityRecord } from '../../api/report'
 import { downloadFile } from '../../utils/file'
 
 const emit = defineEmits(['export'])
@@ -54,7 +63,9 @@ const form = reactive({
   reportType: 'attendance',
   class_name: '',
   start_time: '',
-  end_time: ''
+  end_time: '',
+  student_id: '',
+  activity_name: ''
 })
 
 const isExporting = ref(false)
@@ -65,6 +76,16 @@ const handleExport = async () => {
       emit('export', { error: '请选择时间范围' })
       return
     }
+  } else if (form.reportType === 'studentActivity') {
+    if (!form.student_id) {
+      emit('export', { error: '请输入学生学号' })
+      return
+    }
+  } else {
+    if (!form.activity_name) {
+      emit('export', { error: '请输入活动名称' })
+      return
+    }
   }
   
   isExporting.value = true
@@ -73,17 +94,22 @@ const handleExport = async () => {
     let response, filename
     
     if (form.reportType === 'attendance') {
-      response = await exportAttendance({
+      response = await exportAttendanceSummary({
         class_name: form.class_name,
         start_time: form.start_time.toISOString(),
         end_time: form.end_time.toISOString()
       })
-      filename = `考勤报表_${new Date().toLocaleDateString()}.xlsx`
-    } else {
-      response = await exportActivityFrequency({
-        class_name: form.class_name
+      filename = `考勤报表_${form.class_name || '全部专业'}_${new Date().toLocaleDateString()}.xlsx`
+    } else if (form.reportType === 'studentActivity') {
+      response = await exportStudentActivity({
+        student_id: form.student_id
       })
-      filename = `活动频次报表_${new Date().toLocaleDateString()}.xlsx`
+      filename = `学生活动参与报表_${form.student_id}_${new Date().toLocaleDateString()}.xlsx`
+    } else {
+      response = await exportActivityRecord({
+        activity_name: form.activity_name
+      })
+      filename = `活动记录报表_${form.activity_name}_${new Date().toLocaleDateString()}.xlsx`
     }
     
     if (response instanceof Blob) {

@@ -27,7 +27,9 @@ const handleNavChange = (page) => {
 }
 
 onMounted(() => {
-  if (!localStorage.getItem('access_token')) {
+  localStorage.removeItem('access_token')
+  localStorage.removeItem('refresh_token')
+  if (!sessionStorage.getItem('access_token')) {
     window.location.href = '/login.html'
   }
 })

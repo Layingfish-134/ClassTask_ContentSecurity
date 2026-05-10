@@ -80,7 +80,7 @@ class FaceRecognitionService:
             if face_image.size == 0:
                 continue
 
-            feature = self.feature_extractor.extract_feature(face_image)
+            feature = self.feature_extractor.extract_feature_from_detection(face_info)
             if feature is None:
                 continue
 
@@ -90,7 +90,8 @@ class FaceRecognitionService:
             results.append({
                 'match': match_result,
                 'emotion': emotion_result,
-                'confidence': face_info.get('confidence', 0.0)
+                'confidence': face_info.get('confidence', 0.0),
+                'box': face_info.get('box')
             })
 
         return results

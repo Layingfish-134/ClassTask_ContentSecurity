@@ -109,6 +109,83 @@ class GroupPhotoRecordRepository:
 
         return sorted(frequency, key=lambda x: x['count'], reverse=True)
 
+    @staticmethod
+    def find_student_activities(student_id):
+        query = db.session.query(
+            GroupPhotoRecord.activity_name,
+            GroupPhotoRecord.activity_time,
+            GroupPhotoRecord.photo_name,
+            GroupPhotoRecognitionDetail.confidence,
+            GroupPhotoRecognitionDetail.emotion,
+            GroupPhotoRecognitionDetail.created_at
+        ).join(
+            GroupPhotoRecognitionDetail,
+            GroupPhotoRecord.photo_id == GroupPhotoRecognitionDetail.photo_id
+        ).filter(
+            GroupPhotoRecognitionDetail.student_id == student_id,
+            GroupPhotoRecognitionDetail.status == 1
+        ).order_by(GroupPhotoRecord.activity_time.desc())
+
+        results = query.all()
+        return [{
+            'activity_name': r[0],
+            'activity_time': r[1],
+            'photo_name': r[2],
+            'confidence': float(r[3]) if r[3] else None,
+            'emotion': r[4],
+            'created_at': r[5]
+        } for r in results]
+
+    @staticmethod
+    def find_activity_students(activity_name):
+        from app.models.student import Student
+
+        query = db.session.query(
+            GroupPhotoRecognitionDetail.student_id,
+            Student.name,
+            GroupPhotoRecognitionDetail.class_name,
+            GroupPhotoRecord.activity_name,
+            GroupPhotoRecord.activity_time,
+            GroupPhotoRecord.photo_name,
+            GroupPhotoRecognitionDetail.confidence,
+            GroupPhotoRecognitionDetail.emotion,
+            GroupPhotoRecognitionDetail.created_at
+        ).join(
+            GroupPhotoRecord,
+            GroupPhotoRecord.photo_id == GroupPhotoRecognitionDetail.photo_id
+        ).join(
+            Student,
+            Student.student_id == GroupPhotoRecognitionDetail.student_id,
+            isouter=True
+        ).filter(
+            GroupPhotoRecord.activity_name == activity_name,
+            GroupPhotoRecognitionDetail.status == 1,
+            GroupPhotoRecognitionDetail.student_id.isnot(None)
+        ).order_by(
+            GroupPhotoRecognitionDetail.confidence.desc(),
+            GroupPhotoRecognitionDetail.created_at.desc()
+        )
+
+        results = query.all()
+        students = {}
+        for row in results:
+            student_id = row[0]
+            if student_id in students:
+                continue
+            students[student_id] = {
+                'student_id': student_id,
+                'name': row[1] or '',
+                'class_name': row[2] or '',
+                'activity_name': row[3] or '',
+                'activity_time': row[4],
+                'photo_name': row[5] or '',
+                'confidence': float(row[6]) if row[6] else None,
+                'emotion': row[7] or '',
+                'created_at': row[8]
+            }
+
+        return list(students.values())
+
 
 class GroupPhotoRecognitionDetailRepository:
     @staticmethod

@@ -19,6 +19,7 @@ class GroupPhotoRecognitionDetail(db.Model):
 
     emotion_records = db.relationship('EmotionRecord', backref='group_detail', lazy='dynamic',
                                       foreign_keys='EmotionRecord.group_detail_id')
+    student = db.relationship('Student', backref='group_photo_details')
 
     def to_dict(self):
         return {

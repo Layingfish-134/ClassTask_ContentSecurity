@@ -13,7 +13,7 @@ class GroupPhotoRecognizeResource(Resource):
     @jwt_required()
     def post(self):
         args = group_photo_parser.parse_args()
-        photo_base64 = args['photo_base64']
+        photo_base64 = args.get('photo_base64') or args.get('image_base64')
         image_format = args['image_format']
         photo_name = args.get('photo_name', '')
         activity_name = args.get('activity_name', '')

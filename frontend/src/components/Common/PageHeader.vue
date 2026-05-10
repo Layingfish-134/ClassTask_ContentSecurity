@@ -61,6 +61,8 @@ const handleNavClick = (nav) => {
 }
 
 const handleLogout = () => {
+  sessionStorage.removeItem('access_token')
+  sessionStorage.removeItem('refresh_token')
   localStorage.removeItem('access_token')
   localStorage.removeItem('refresh_token')
   window.location.href = '/login.html'
@@ -68,7 +70,9 @@ const handleLogout = () => {
 
 onMounted(async () => {
   try {
-    const token = localStorage.getItem('access_token')
+    localStorage.removeItem('access_token')
+    localStorage.removeItem('refresh_token')
+    const token = sessionStorage.getItem('access_token')
     if (!token) {
       window.location.href = '/login.html'
       return
@@ -79,6 +83,8 @@ onMounted(async () => {
     }
   } catch (error) {
     console.error('获取用户信息失败:', error)
+    sessionStorage.removeItem('access_token')
+    sessionStorage.removeItem('refresh_token')
     localStorage.removeItem('access_token')
     localStorage.removeItem('refresh_token')
     window.location.href = '/login.html'

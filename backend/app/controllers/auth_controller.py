@@ -1,4 +1,5 @@
 from flask_restful import Resource
+from flask import current_app
 from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity
 from app.models.user import User
 from app.dto.request.parsers import login_parser, refresh_parser
@@ -23,8 +24,9 @@ class LoginResource(Resource):
         if not bcrypt.checkpw(password.encode('utf-8'), user.password_hash.encode('utf-8')):
             return error_response('用户名或密码错误', BizCode.UNAUTHORIZED)
 
-        access_token = create_access_token(identity=user.user_id)
-        refresh_token = create_refresh_token(identity=user.user_id)
+        claims = {'session_version': current_app.config.get('AUTH_SESSION_VERSION')}
+        access_token = create_access_token(identity=user.user_id, additional_claims=claims)
+        refresh_token = create_refresh_token(identity=user.user_id, additional_claims=claims)
 
         return success_response({
             'access_token': access_token,
@@ -45,13 +47,16 @@ class RefreshResource(Resource):
             from flask_jwt_extended import decode_token
             decoded = decode_token(refresh_token)
             user_id = decoded['sub']
+            if decoded.get('session_version') != current_app.config.get('AUTH_SESSION_VERSION'):
+                return error_response('刷新令牌无效或已过期', BizCode.TOKEN_EXPIRED)
 
             user = User.query.get(user_id)
             if not user or user.status != 1:
                 return error_response('用户不存在或已停用', BizCode.UNAUTHORIZED)
 
-            access_token = create_access_token(identity=user_id)
-            refresh_token_new = create_refresh_token(identity=user_id)
+            claims = {'session_version': current_app.config.get('AUTH_SESSION_VERSION')}
+            access_token = create_access_token(identity=user_id, additional_claims=claims)
+            refresh_token_new = create_refresh_token(identity=user_id, additional_claims=claims)
 
             return success_response({
                 'access_token': access_token,

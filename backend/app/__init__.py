@@ -1,5 +1,6 @@
 import os
 import logging
+import uuid
 from flask import Flask
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
@@ -23,6 +24,7 @@ def create_app():
     app.config['UPLOAD_FOLDER'] = os.getenv('UPLOAD_FOLDER', 'uploads/')
     app.config['MAX_CONTENT_LENGTH'] = int(os.getenv('MAX_CONTENT_LENGTH', 10485760))
     app.config['PROPAGATE_EXCEPTIONS'] = True
+    app.config['AUTH_SESSION_VERSION'] = uuid.uuid4().hex
 
     logging.basicConfig(
         level=logging.INFO,
@@ -55,6 +57,11 @@ def create_app():
 def _register_jwt_handlers(jwt):
     from app.dto.response.common import error_response, BizCode
 
+    @jwt.token_in_blocklist_loader
+    def check_token_session_version(jwt_header, jwt_payload):
+        from flask import current_app
+        return jwt_payload.get('session_version') != current_app.config.get('AUTH_SESSION_VERSION')
+
     @jwt.unauthorized_loader
     def handle_missing_token(reason):
         return error_response('未登录或登录状态已失效', BizCode.UNAUTHORIZED)
@@ -85,7 +92,10 @@ def _register_routes(api):
     from app.controllers.group_photo_controller import GroupPhotoRecognizeResource, GroupPhotoRecordResource
     from app.controllers.emotion_controller import EmotionStatisticsResource, EmotionTrendResource
     from app.controllers.report_controller import (
-        AttendanceExportResource, ActivityFrequencyExportResource, FileAccessResource
+        AttendanceExportResource, ActivityFrequencyExportResource, 
+        AttendanceSummaryExportResource, StudentActivityExportResource,
+        ActivityRecordExportResource,
+        FileAccessResource
     )
     from app.controllers.auth_controller import LoginResource, RefreshResource, CurrentUserResource
 
@@ -108,6 +118,9 @@ def _register_routes(api):
     api.add_resource(EmotionTrendResource, '/emotion/trend')
 
     api.add_resource(AttendanceExportResource, '/reports/attendance/export')
+    api.add_resource(AttendanceSummaryExportResource, '/reports/attendance-summary/export')
     api.add_resource(ActivityFrequencyExportResource, '/reports/activity-frequency/export')
+    api.add_resource(StudentActivityExportResource, '/reports/activity/export')
+    api.add_resource(ActivityRecordExportResource, '/reports/activity-record/export')
 
     api.add_resource(FileAccessResource, '/files/<string:filename>')

@@ -219,3 +219,93 @@ class ReportService:
             df.to_excel(writer, index=False, sheet_name='活动参与频次')
         output.seek(0)
         return output.getvalue()
+
+    def export_attendance_summary_report(self, class_name=None, start_time=None, end_time=None):
+        import pandas as pd
+        from io import BytesIO
+        from app.repositories.student_repository import StudentRepository
+
+        attended_students = AttendanceRecordRepository.find_attended_students(
+            class_name=class_name, start_time=start_time, end_time=end_time
+        )
+        attended_ids = {s['student_id'] for s in attended_students}
+
+        all_students = StudentRepository.find_by_class(class_name=class_name)
+
+        attended_list = []
+        unattended_list = []
+        for student in all_students:
+            student_data = {
+                '学号': student.student_id,
+                '姓名': student.name,
+                '专业': student.class_name
+            }
+            if student.student_id in attended_ids:
+                attended_list.append(student_data)
+            else:
+                unattended_list.append(student_data)
+
+        df_attended = pd.DataFrame(attended_list)
+        df_unattended = pd.DataFrame(unattended_list)
+
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df_attended.to_excel(writer, index=False, sheet_name='已签到学生')
+            df_unattended.to_excel(writer, index=False, sheet_name='未签到学生')
+        output.seek(0)
+        return output.getvalue()
+
+    def export_student_activity_report(self, student_id):
+        import pandas as pd
+        from io import BytesIO
+
+        activities = GroupPhotoRecordRepository.find_student_activities(student_id=student_id)
+
+        data = []
+        for act in activities:
+            activity_time = act['activity_time'].strftime('%Y-%m-%d %H:%M:%S') if act['activity_time'] else ''
+            created_at = act['created_at'].strftime('%Y-%m-%d %H:%M:%S') if act['created_at'] else ''
+            data.append({
+                '活动名称': act['activity_name'] or '',
+                '活动时间': activity_time,
+                '照片名称': act['photo_name'] or '',
+                '匹配置信度': act['confidence'] or '',
+                '情绪': act['emotion'] or '',
+                '识别时间': created_at
+            })
+
+        df = pd.DataFrame(data)
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='活动记录')
+        output.seek(0)
+        return output.getvalue()
+
+    def export_activity_record_report(self, activity_name):
+        import pandas as pd
+        from io import BytesIO
+
+        students = GroupPhotoRecordRepository.find_activity_students(activity_name=activity_name)
+
+        data = []
+        for item in students:
+            activity_time = item['activity_time'].strftime('%Y-%m-%d %H:%M:%S') if item['activity_time'] else ''
+            created_at = item['created_at'].strftime('%Y-%m-%d %H:%M:%S') if item['created_at'] else ''
+            data.append({
+                '活动名称': item['activity_name'],
+                '活动时间': activity_time,
+                '学号': item['student_id'],
+                '姓名': item['name'],
+                '专业': item['class_name'],
+                '照片名称': item['photo_name'],
+                '匹配置信度': item['confidence'] or '',
+                '情绪': item['emotion'],
+                '识别时间': created_at
+            })
+
+        df = pd.DataFrame(data)
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='签到学生名单')
+        output.seek(0)
+        return output.getvalue()

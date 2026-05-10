@@ -177,3 +177,28 @@ class AttendanceRecordRepository:
         except (ValueError, TypeError):
             pass
         return query.all()
+
+    @staticmethod
+    def find_attended_students(class_name=None, start_time=None, end_time=None):
+        query = db.session.query(
+            AttendanceRecord.student_id,
+            db.func.max(AttendanceRecord.attendance_time).label('last_attendance')
+        ).filter(AttendanceRecord.status == 1)
+
+        if class_name:
+            query = query.filter(AttendanceRecord.class_name == class_name)
+        if start_time:
+            try:
+                start_dt = datetime.fromisoformat(start_time)
+                query = query.filter(AttendanceRecord.attendance_time >= start_dt)
+            except (ValueError, TypeError):
+                pass
+        if end_time:
+            try:
+                end_dt = datetime.fromisoformat(end_time)
+                query = query.filter(AttendanceRecord.attendance_time <= end_dt)
+            except (ValueError, TypeError):
+                pass
+
+        results = query.group_by(AttendanceRecord.student_id).all()
+        return [{'student_id': r[0], 'last_attendance': r[1]} for r in results]

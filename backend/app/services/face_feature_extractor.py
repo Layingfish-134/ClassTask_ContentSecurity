@@ -63,8 +63,8 @@ class FaceFeatureExtractor:
     def _clip_box(self, box, image_shape):
         height, width = image_shape[:2]
         x1, y1, x2, y2 = box.astype(int)
-        x1, y1 = max(0, x1), max(0, y1)
-        x2, y2 = min(width, x2), min(height, y2)
+        x1, y1 = int(max(0, x1)), int(max(0, y1))
+        x2, y2 = int(min(width, x2)), int(min(height, y2))
         return x1, y1, x2, y2
 
     def _extract_aligned_tensor(self, rgb_image, box):

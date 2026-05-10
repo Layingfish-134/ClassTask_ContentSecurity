@@ -1,8 +1,10 @@
 import cv2
 import numpy as np
+import os
+import torch
 
 try:
-    from mtcnn import MTCNN
+    from facenet_pytorch import MTCNN
     MTCNN_AVAILABLE = True
 except ImportError:
     MTCNN_AVAILABLE = False
@@ -11,11 +13,24 @@ except ImportError:
 class MultiFaceDetector:
     def __init__(self):
         self.detector = None
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self._init_detector()
 
     def _init_detector(self):
         if MTCNN_AVAILABLE:
-            self.detector = MTCNN()
+            self.detector = MTCNN(
+                image_size=160,
+                margin=int(os.getenv('FACE_CROP_MARGIN', 24)),
+                min_face_size=int(os.getenv('FACE_MIN_SIZE', 40)),
+                thresholds=[
+                    float(os.getenv('FACE_MTCNN_PNET_THRESHOLD', 0.6)),
+                    float(os.getenv('FACE_MTCNN_RNET_THRESHOLD', 0.7)),
+                    float(os.getenv('FACE_MTCNN_ONET_THRESHOLD', 0.7)),
+                ],
+                post_process=True,
+                keep_all=True,
+                device=self.device
+            )
 
     def detect_faces(self, image_data):
         if isinstance(image_data, bytes):
@@ -34,13 +49,15 @@ class MultiFaceDetector:
 
     def _detect_mtcnn(self, image):
         rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        results = self.detector.detect_faces(rgb_image)
+        boxes, probs, landmarks = self.detector.detect(rgb_image, landmarks=True)
+        if boxes is None or len(boxes) == 0:
+            return []
+
+        aligned_tensors = self._extract_aligned_tensors(rgb_image, boxes)
 
         faces = []
-        for result in results:
-            x1, y1, width, height = result['box']
-            x1, y1 = max(0, x1), max(0, y1)
-            x2, y2 = x1 + width, y1 + height
+        for index, box in enumerate(boxes):
+            x1, y1, x2, y2 = self._clip_box(box, image.shape)
 
             face_image = image[y1:y2, x1:x2]
             if face_image.size == 0:
@@ -48,12 +65,31 @@ class MultiFaceDetector:
 
             faces.append({
                 'box': (x1, y1, x2, y2),
-                'confidence': result['confidence'],
+                'confidence': float(probs[index]),
                 'face_image': face_image,
-                'keypoints': result.get('keypoints', {})
+                'aligned_tensor': aligned_tensors[index] if aligned_tensors is not None else None,
+                'keypoints': landmarks[index].tolist() if landmarks is not None else {}
             })
 
         return faces
+
+    def _clip_box(self, box, image_shape):
+        height, width = image_shape[:2]
+        x1, y1, x2, y2 = box.astype(int)
+        x1, y1 = int(max(0, x1)), int(max(0, y1))
+        x2, y2 = int(min(width, x2)), int(min(height, y2))
+        return x1, y1, x2, y2
+
+    def _extract_aligned_tensors(self, rgb_image, boxes):
+        try:
+            aligned = self.detector.extract(rgb_image, boxes, None)
+            if aligned is None:
+                return None
+            if isinstance(aligned, torch.Tensor):
+                return aligned
+            return torch.from_numpy(aligned)
+        except Exception:
+            return None
 
     def _detect_opencv(self, image):
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)

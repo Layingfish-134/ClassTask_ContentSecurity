@@ -223,8 +223,10 @@
         const data = await response.json()
 
         if (data.code === 200) {
-          localStorage.setItem('access_token', data.data.access_token)
-          localStorage.setItem('refresh_token', data.data.refresh_token)
+          localStorage.removeItem('access_token')
+          localStorage.removeItem('refresh_token')
+          sessionStorage.setItem('access_token', data.data.access_token)
+          sessionStorage.setItem('refresh_token', data.data.refresh_token)
           window.location.href = '/'
         } else {
           errorMessage.textContent = data.message || '登录失败'

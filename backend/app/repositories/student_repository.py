@@ -65,3 +65,10 @@ class StudentRepository:
         records = records[:size]
         next_cursor = records[-1].student_id if records and has_more else None
         return records, has_more, next_cursor
+
+    @staticmethod
+    def find_by_class(class_name=None):
+        query = Student.query.filter(Student.status == 1)
+        if class_name:
+            query = query.filter(Student.class_name == class_name)
+        return query.all()
