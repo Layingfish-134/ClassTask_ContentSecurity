@@ -8,8 +8,8 @@
         </el-select>
       </el-form-item>
       
-      <el-form-item label="班级" v-if="form.reportType === 'attendance'">
-        <el-input v-model="form.class_name" placeholder="请输入班级名称"></el-input>
+      <el-form-item label="专业" v-if="form.reportType === 'attendance'">
+        <el-input v-model="form.class_name" placeholder="请输入专业名称"></el-input>
       </el-form-item>
       
       <el-form-item label="开始时间" v-if="form.reportType === 'attendance'">

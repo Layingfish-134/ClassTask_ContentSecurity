@@ -1,4 +1,4 @@
-# 班级考勤系统 API 交互协议
+# 专业考勤系统 API 交互协议
 
 版本：v1.0  
 适用阶段：阶段一接口联调前置协议  
@@ -110,8 +110,8 @@
 **人脸向量检索**
 
 - MySQL 中的 `student_info.face_feature` 只用于持久化备份和缓存重建，不用于每次考勤时全表扫描。
-- 考勤识别时，算法服务必须按班级或活跃学生范围加载人脸特征到内存、Redis 或 FAISS 等向量索引中。
-- 新增学生、更新人脸、批量导入后，后端必须刷新对应班级的人脸特征缓存或递增缓存版本。
+- 考勤识别时，算法服务必须按专业或活跃学生范围加载人脸特征到内存、Redis 或 FAISS 等向量索引中。
+- 新增学生、更新人脸、批量导入后，后端必须刷新对应专业的人脸特征缓存或递增缓存版本。
 - 禁止在高频考勤接口中执行“读取全班 JSON 特征到 Python 后逐条解析”的 O(N) 数据库查询流程。
 
 **图片访问**
@@ -276,7 +276,7 @@ Authorization: Bearer <refresh_token>
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
 | `student_id` | string | 否 | 学号筛选 |
-| `class_name` | string | 否 | 班级筛选，学生角色不可用 |
+| `class_name` | string | 否 | 专业筛选，学生角色不可用 |
 | `start_time` | string | 否 | 开始时间 |
 | `end_time` | string | 否 | 结束时间 |
 | `status` | int | 否 | `0` 失败，`1` 成功 |
@@ -334,7 +334,7 @@ Authorization: Bearer <refresh_token>
 时序规则：
 
 - `activity_time` 表示照片对应活动实际发生时间，可以早于上传时间。
-- 合照识别明细中的 `class_name` 必须按 `activity_time` 查询 `class_enrollment_history` 得到历史班级快照，不能使用上传/识别当天的当前班级。
+- 合照识别明细中的 `class_name` 必须按 `activity_time` 查询 `class_enrollment_history` 得到历史专业快照，不能使用上传/识别当天的当前专业。
 - `emotion_record.detected_at` 对合照来源建议使用 `activity_time`，保证情绪统计按活动发生时间归档。
 - 如果 `activity_time` 为空，后端才允许退化使用服务端上传时间。
 
@@ -382,7 +382,7 @@ Authorization: Bearer <refresh_token>
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
 | `activity_name` | string | 否 | 活动名称 |
-| `class_name` | string | 否 | 班级 |
+| `class_name` | string | 否 | 专业 |
 | `start_time` | string | 否 | 开始时间 |
 | `end_time` | string | 否 | 结束时间 |
 | `cursor` | string | 否 | 上一页返回的 `next_cursor`，第一页不传 |
@@ -419,7 +419,7 @@ Authorization: Bearer <refresh_token>
 
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
-| `class_name` | string | 否 | 班级筛选 |
+| `class_name` | string | 否 | 专业筛选 |
 | `student_id` | string | 否 | 学号筛选 |
 | `source_type` | string | 否 | `attendance` 或 `group_photo` |
 | `start_time` | string | 是 | 开始时间 |
@@ -498,7 +498,7 @@ Authorization: Bearer <refresh_token>
 |------|------|------|
 | `student_id` | 是 | 学号，需唯一 |
 | `name` | 是 | 姓名 |
-| `class_name` | 是 | 班级 |
+| `class_name` | 是 | 专业 |
 | `face_image_base64` | 是 | 人脸图片 Base64 |
 | `image_format` | 是 | `jpg`、`jpeg` 或 `png` |
 | `username` | 否 | 学生账号用户名，默认使用学号 |
@@ -530,8 +530,8 @@ Authorization: Bearer <refresh_token>
 
 - 新增学生时，后端必须在同一个数据库事务中同时写入 `student_info` 和 `user_info`。
 - `user_info.role` 必须为 `student`，`user_info.student_id` 必须关联本次新增的 `student_info.student_id`。
-- 同一事务中还必须写入 `class_enrollment_history`，记录学生进入当前班级的 `enrolled_at`。
-- 如果学生信息、人脸特征、账号或班级归属历史任一步写入失败，整个事务必须回滚，避免出现“有学生无账号”或历史班级分母缺失的脏数据。
+- 同一事务中还必须写入 `class_enrollment_history`，记录学生进入当前专业的 `enrolled_at`。
+- 如果学生信息、人脸特征、账号或专业归属历史任一步写入失败，整个事务必须回滚，避免出现“有学生无账号”或历史专业分母缺失的脏数据。
 - `username` 为空时默认使用 `student_id`；`password` 为空时使用后端配置的默认初始密码或一次性重置密码。
 - 数据库层约束要求：`role='student'` 的账号必须绑定 `student_id`；`teacher` / `admin` 账号不得绑定 `student_id`。
 - 账号唯一性只约束活跃账号：软删除账号不会继续占用 `username`，但如果 `student_id` 已存在于 `student_info`，后端应走恢复/更新流程，而不是盲目插入重复学生主键。
@@ -554,7 +554,7 @@ Authorization: Bearer <refresh_token>
 |------|------|------|------|
 | `student_excel` | file | 是 | 学生基础信息 Excel，建议 `.xlsx` |
 | `face_zip` | file | 是 | 学生人脸图片 ZIP 包 |
-| `class_name` | string | 否 | 批量指定班级；如果 Excel 已包含班级列，可不传 |
+| `class_name` | string | 否 | 批量指定专业；如果 Excel 已包含专业列，可不传 |
 | `match_rule` | string | 否 | 图片匹配规则，默认 `student_id_filename` |
 | `overwrite_existing` | boolean | 否 | 是否覆盖已存在学生和人脸特征，默认 `false` |
 
@@ -564,7 +564,7 @@ Excel 模板字段：
 |------|------|------|
 | `student_id` | 是 | 学号，需唯一 |
 | `name` | 是 | 姓名 |
-| `class_name` | 是 | 班级 |
+| `class_name` | 是 | 专业 |
 | `username` | 否 | 学生账号用户名，默认使用学号 |
 | `password` | 否 | 初始密码，后端需加密存储 |
 
@@ -612,8 +612,8 @@ ZIP 图片命名约定：
 - 学号是学生唯一标识，重复学号按 `overwrite_existing` 决定拒绝或覆盖。
 - 人脸特征提取失败时，允许部分成功导入，并在 `failures` 中返回失败明细。
 - 每个成功导入的学生都必须同步写入 `student_info` 和 `user_info`，并创建 `role='student'` 的学生账号。
-- 批量导入建议以“单个学生”为事务边界：同一名学生的基本信息、人脸特征、学生账号和班级归属历史必须同一事务提交；该学生失败则回滚该学生，不影响其他学生继续导入。
-- 该接口用于“班级人脸库可批量导入”评分点，报告中可归入系统易用性和数据初始化能力。
+- 批量导入建议以“单个学生”为事务边界：同一名学生的基本信息、人脸特征、学生账号和专业归属历史必须同一事务提交；该学生失败则回滚该学生，不影响其他学生继续导入。
+- 该接口用于“专业人脸库可批量导入”评分点，报告中可归入系统易用性和数据初始化能力。
 - 批量导入会连续调用人脸检测和特征提取模型，纯 CPU 环境可能耗时 10-20 秒甚至更久。
 - 前端调用该接口时，Axios `timeout` 建议至少设置为 `60000ms`，并务必显示全局 Loading 遮罩层，避免用户重复提交。
 
@@ -625,7 +625,7 @@ ZIP 图片命名约定：
 
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
-| `class_name` | string | 否 | 班级 |
+| `class_name` | string | 否 | 专业 |
 | `keyword` | string | 否 | 学号或姓名关键字 |
 | `cursor` | string | 否 | 上一页返回的 `next_cursor`，第一页不传 |
 | `size` | int | 否 | 默认 `20`，最大 `100` |
@@ -647,12 +647,12 @@ ZIP 图片命名约定：
 
 处理规则：
 
-- 如果只更新姓名或人脸图片，不需要变更班级归属历史。
+- 如果只更新姓名或人脸图片，不需要变更专业归属历史。
 - 如果 `class_name` 发生变化，后端必须在同一个事务中：
   - 更新 `student_info.class_name`。
   - 将旧的 `class_enrollment_history` 当前记录写入 `left_at`。
-  - 新增一条新班级的 `class_enrollment_history` 记录。
-- 班级变更历史用于保证历史出勤率分母不会被当前班级状态污染。
+  - 新增一条新专业的 `class_enrollment_history` 记录。
+- 专业变更历史用于保证历史出勤率分母不会被当前专业状态污染。
 
 ### 7.5 删除学生
 
@@ -696,7 +696,7 @@ ZIP 图片命名约定：
 - 该接口必须要求登录，不允许匿名访问。
 - 后端必须根据 `file_id` 查找内部 `image_path` 或 `photo_path`，不得把客户端传入内容拼接为磁盘路径。
 - 后端必须做路径归一化，确保最终路径仍位于允许的上传根目录内，防止 `../` 目录遍历。
-- 学生只能访问本人考勤图片或授权可见的合照；教师和管理员按权限访问班级或活动文件。
+- 学生只能访问本人考勤图片或授权可见的合照；教师和管理员按权限访问专业或活动文件。
 - 不得开放 `/uploads/**` 这类公开静态目录。
 
 成功响应：
@@ -719,7 +719,7 @@ ZIP 图片命名约定：
 
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
-| `class_name` | string | 否 | 班级 |
+| `class_name` | string | 否 | 专业 |
 | `start_time` | string | 是 | 开始时间 |
 | `end_time` | string | 是 | 结束时间 |
 
@@ -742,7 +742,7 @@ ZIP 图片命名约定：
 
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
-| `class_name` | string | 否 | 班级 |
+| `class_name` | string | 否 | 专业 |
 | `activity_name` | string | 否 | 活动名称 |
 | `start_time` | string | 否 | 开始时间 |
 | `end_time` | string | 否 | 结束时间 |
@@ -774,6 +774,6 @@ ZIP 图片命名约定：
 | A-19 | 学生查询本人数据 | 只返回本人记录 |
 | A-20 | 客户端伪造 `capture_time` | `attendance_time` 仍以服务端时间为准 |
 | A-21 | 连续点击重复考勤 | 相同 `idempotency_key` 不重复触发识别模型 |
-| A-22 | 上传历史合照 | 明细 `class_name` 按 `activity_time` 对应历史班级归属计算 |
+| A-22 | 上传历史合照 | 明细 `class_name` 按 `activity_time` 对应历史专业归属计算 |
 | A-23 | 软删除后复用用户名 | 已停用账号不阻塞新活跃账号使用同名 `username` |
 | A-24 | 数据库连接异常 | 返回 `50300`，后端进程不崩溃 |

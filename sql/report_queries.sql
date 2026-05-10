@@ -1,9 +1,9 @@
--- 班级考勤系统统计报表 SQL
+-- 专业考勤系统统计报表 SQL
 -- 参数占位符使用 :param_name，后端封装时替换为框架实际语法。
 
 USE attendance_db;
 
--- 1. 按日期统计班级出勤率
+-- 1. 按日期统计专业出勤率
 -- 参数：:class_name, :start_time, :end_time
 -- 依赖 calendar_date 日期维表，避免递归 CTE 超过 MySQL cte_max_recursion_depth。
 WITH date_range AS (
@@ -87,7 +87,7 @@ ORDER BY COALESCE(gprd.class_name, si.class_name), si.student_id;
 
 -- 4. 按学生统计活动参与次数
 -- 参数：:class_name, :activity_name, :start_time, :end_time
--- 统计主体是学生本人，班级快照只用于筛选，不参与最终分组，避免转班学生被拆成多行。
+-- 统计主体是学生本人，专业快照只用于筛选，不参与最终分组，避免转班学生被拆成多行。
 WITH participation AS (
   SELECT
     gprd.student_id,
@@ -165,7 +165,7 @@ ORDER BY stat_date;
 -- 7. 导出考勤 Excel 明细查询
 -- 参数：:class_name, :start_time, :end_time
 SELECT
-  COALESCE(ar.class_name, si.class_name) AS 班级,
+  COALESCE(ar.class_name, si.class_name) AS 专业,
   si.student_id AS 学号,
   si.name AS 姓名,
   CASE ar.status WHEN 1 THEN '成功' ELSE '失败' END AS 考勤状态,

@@ -179,7 +179,7 @@ class ReportService:
                 '记录ID': record.record_id,
                 '学号': record.student_id or '',
                 '姓名': record.student.name if record.student else '',
-                '班级': record.class_name or '',
+                '专业': record.class_name or '',
                 '考勤状态': '成功' if record.status == 1 else '失败',
                 '匹配置信度': float(record.confidence) if record.confidence else '',
                 '活体检测': '通过' if record.liveness_passed else '未通过',
@@ -209,7 +209,7 @@ class ReportService:
             data.append({
                 '学号': item['student_id'],
                 '姓名': item['name'],
-                '班级': item['class_name'],
+                '专业': item['class_name'],
                 '参与活动次数': item['count']
             })
 

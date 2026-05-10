@@ -1,7 +1,7 @@
 {
   "name": "attendance-frontend",
   "version": "1.0.0",
-  "description": "班级考勤系统前端",
+  "description": "专业考勤系统前端",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

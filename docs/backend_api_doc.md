@@ -1,4 +1,4 @@
-# 班级考勤系统 - 后端API接口文档
+# 专业考勤系统 - 后端API接口文档
 
 ## 1. 基础信息
 
@@ -221,7 +221,7 @@ Authorization: Bearer <access_token>
 | 参数名 | 类型 | 必填 | 说明 |
 |--------|------|------|------|
 | student_id | String | 否 | 学号筛选 |
-| class_name | String | 否 | 班级筛选 |
+| class_name | String | 否 | 专业筛选 |
 | start_time | String | 否 | 开始时间（ISO8601格式） |
 | end_time | String | 否 | 结束时间（ISO8601格式） |
 | status | Integer | 否 | 状态筛选（0失败/1成功） |
@@ -278,7 +278,7 @@ Authorization: Bearer <access_token>
 
 | 参数名 | 类型 | 必填 | 说明 |
 |--------|------|------|------|
-| class_name | String | 否 | 班级筛选 |
+| class_name | String | 否 | 专业筛选 |
 | keyword | String | 否 | 学号或姓名关键词 |
 | page | Integer | 否 | 页码，默认1 |
 | size | Integer | 否 | 每页数量，默认20 |
@@ -328,7 +328,7 @@ Authorization: Bearer <access_token>
 |--------|------|------|------|
 | student_id | String | 是 | 学号 |
 | name | String | 是 | 姓名 |
-| class_name | String | 是 | 班级 |
+| class_name | String | 是 | 专业 |
 | face_image_base64 | String | 是 | 人脸图像Base64编码 |
 
 **请求示例**:
@@ -426,7 +426,7 @@ Authorization: Bearer <access_token>
 | 参数名 | 类型 | 必填 | 说明 |
 |--------|------|------|------|
 | name | String | 否 | 姓名 |
-| class_name | String | 否 | 班级 |
+| class_name | String | 否 | 专业 |
 | face_image_base64 | String | 否 | 人脸图像（更新人脸特征时传） |
 
 **请求示例**:
@@ -611,7 +611,7 @@ Authorization: Bearer <access_token>
 
 | 参数名 | 类型 | 必填 | 说明 |
 |--------|------|------|------|
-| class_name | String | 否 | 班级筛选 |
+| class_name | String | 否 | 专业筛选 |
 | activity_type | String | 否 | 活动类型筛选 |
 | start_time | String | 否 | 开始时间（ISO8601格式） |
 | end_time | String | 否 | 结束时间（ISO8601格式） |
@@ -658,7 +658,7 @@ Authorization: Bearer <access_token>
 
 | 参数名 | 类型 | 必填 | 说明 |
 |--------|------|------|------|
-| class_name | String | 否 | 班级筛选 |
+| class_name | String | 否 | 专业筛选 |
 | start_time | String | 是 | 开始时间（ISO8601格式） |
 | end_time | String | 是 | 结束时间（ISO8601格式） |
 
@@ -688,7 +688,7 @@ Authorization: Bearer <access_token>
 
 | 参数名 | 类型 | 必填 | 说明 |
 |--------|------|------|------|
-| class_name | String | 否 | 班级筛选 |
+| class_name | String | 否 | 专业筛选 |
 
 **请求示例**:
 ```
@@ -783,4 +783,4 @@ curl -X DELETE http://localhost:5000/api/students/2024001 \
 
 **文档版本**: v1.0  
 **创建时间**: 2026-05-06  
-**适用项目**: 班级考勤系统 - 后端模块
+**适用项目**: 专业考勤系统 - 后端模块

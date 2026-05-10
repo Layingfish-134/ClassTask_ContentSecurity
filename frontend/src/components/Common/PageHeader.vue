@@ -2,7 +2,7 @@
   <header class="page-header">
     <div class="flex-between">
       <div class="logo-section">
-        <h1 class="logo">班级考勤系统</h1>
+        <h1 class="logo">专业考勤系统</h1>
       </div>
       <nav class="nav-section">
         <el-menu mode="horizontal" :default-active="currentNav" class="nav-menu">

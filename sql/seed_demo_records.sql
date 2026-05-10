@@ -2301,7 +2301,7 @@ INSERT INTO group_photo_record (photo_id, photo_name, photo_path, activity_name,
   (300002, '实验课合照.jpg', 'group_photos/300002.jpg', '实验课合照', '2026-04-16 15:00:00', 38, 34, 4, 'u_teacher_001'),
   (300003, '安全教育讲座.jpg', 'group_photos/300003.jpg', '安全教育讲座', '2026-04-23 10:00:00', 52, 48, 4, 'u_teacher_001'),
   (300004, '课程设计讨论.jpg', 'group_photos/300004.jpg', '课程设计讨论', '2026-04-29 15:00:00', 49, 48, 1, 'u_teacher_001'),
-  (300005, '班级团日活动.jpg', 'group_photos/300005.jpg', '班级团日活动', '2026-05-06 16:00:00', 44, 41, 3, 'u_teacher_001')
+  (300005, '专业团日活动.jpg', 'group_photos/300005.jpg', '专业团日活动', '2026-05-06 16:00:00', 44, 41, 3, 'u_teacher_001')
 AS incoming
 ON DUPLICATE KEY UPDATE
   photo_name = incoming.photo_name,

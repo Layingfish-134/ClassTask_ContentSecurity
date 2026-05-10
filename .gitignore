@@ -36,6 +36,7 @@ Thumbs.db
 # Database
 *.db
 *.sqlite
+backend/instance/
 
 # Logs
 logs/
@@ -44,6 +45,13 @@ logs/
 # Data files
 data/models/
 data/uploads/
+backend/uploads/
+uploads/
+
+# Model files
+backend/models/
+*.pt
+*.bin
 
 # Virtual environment
 venv/
