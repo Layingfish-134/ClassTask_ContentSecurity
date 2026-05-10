@@ -35,7 +35,7 @@ class FaceRecognitionService:
         if face_result is None:
             return FaceMatchResult(matched=False), EmotionResult()
 
-        feature = self.feature_extractor.extract_feature(face_result['face_image'])
+        feature = self.feature_extractor.extract_feature_from_detection(face_result)
         if feature is None:
             return FaceMatchResult(matched=False), EmotionResult()
 

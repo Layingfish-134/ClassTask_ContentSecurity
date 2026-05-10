@@ -4,13 +4,7 @@ import os
 import torch
 
 try:
-    from mtcnn import MTCNN
-    MTCNN_AVAILABLE = True
-except ImportError:
-    MTCNN_AVAILABLE = False
-
-try:
-    from facenet_pytorch import InceptionResnetV1
+    from facenet_pytorch import MTCNN, InceptionResnetV1
     FACENET_AVAILABLE = True
 except ImportError:
     FACENET_AVAILABLE = False
@@ -24,9 +18,21 @@ class FaceFeatureExtractor:
         self._init_models()
 
     def _init_models(self):
-        if MTCNN_AVAILABLE:
-            self.detector = MTCNN()
         if FACENET_AVAILABLE:
+            self.detector = MTCNN(
+                image_size=160,
+                margin=int(os.getenv('FACE_CROP_MARGIN', 24)),
+                min_face_size=int(os.getenv('FACE_MIN_SIZE', 40)),
+                thresholds=[
+                    float(os.getenv('FACE_MTCNN_PNET_THRESHOLD', 0.6)),
+                    float(os.getenv('FACE_MTCNN_RNET_THRESHOLD', 0.7)),
+                    float(os.getenv('FACE_MTCNN_ONET_THRESHOLD', 0.7)),
+                ],
+                post_process=True,
+                select_largest=True,
+                keep_all=False,
+                device=self.device
+            )
             self.resnet = InceptionResnetV1(
                 pretrained='vggface2',
                 device=self.device
@@ -36,24 +42,43 @@ class FaceFeatureExtractor:
         if self.detector is None:
             return self._detect_face_opencv(image)
 
-        if isinstance(image, np.ndarray):
-            rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        else:
-            rgb_image = image
-
-        results = self.detector.detect_faces(rgb_image)
-        if not results:
+        rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        boxes, probs, landmarks = self.detector.detect(rgb_image, landmarks=True)
+        if boxes is None or len(boxes) == 0:
             return None
 
-        x1, y1, width, height = results[0]['box']
-        x1, y1 = max(0, x1), max(0, y1)
-        x2, y2 = x1 + width, y1 + height
+        best_idx = int(np.argmax(probs))
+        box = boxes[best_idx]
+        x1, y1, x2, y2 = self._clip_box(box, image.shape)
+        aligned_tensor = self._extract_aligned_tensor(rgb_image, box)
 
         return {
             'box': (x1, y1, x2, y2),
-            'confidence': results[0]['confidence'],
-            'face_image': image[y1:y2, x1:x2]
+            'confidence': float(probs[best_idx]),
+            'face_image': image[y1:y2, x1:x2],
+            'aligned_tensor': aligned_tensor,
+            'landmarks': landmarks[best_idx].tolist() if landmarks is not None else None
         }
+
+    def _clip_box(self, box, image_shape):
+        height, width = image_shape[:2]
+        x1, y1, x2, y2 = box.astype(int)
+        x1, y1 = max(0, x1), max(0, y1)
+        x2, y2 = min(width, x2), min(height, y2)
+        return x1, y1, x2, y2
+
+    def _extract_aligned_tensor(self, rgb_image, box):
+        if self.detector is None:
+            return None
+        try:
+            aligned = self.detector.extract(rgb_image, np.expand_dims(box, axis=0), None)
+            if aligned is None:
+                return None
+            if isinstance(aligned, torch.Tensor) and aligned.ndim == 4:
+                return aligned[0]
+            return aligned
+        except Exception:
+            return None
 
     def _detect_face_opencv(self, image):
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -89,6 +114,30 @@ class FaceFeatureExtractor:
         except Exception:
             return self._extract_feature_opencv(face_image)
 
+    def extract_feature_from_detection(self, face_result):
+        aligned_tensor = face_result.get('aligned_tensor') if face_result else None
+        if aligned_tensor is not None and self.resnet is not None:
+            try:
+                return self._extract_feature_from_tensor(aligned_tensor)
+            except Exception:
+                pass
+
+        return self.extract_feature(face_result['face_image'])
+
+    def _extract_feature_from_tensor(self, face_tensor):
+        if not isinstance(face_tensor, torch.Tensor):
+            face_tensor = torch.from_numpy(face_tensor)
+
+        if face_tensor.ndim == 3:
+            face_tensor = face_tensor.unsqueeze(0)
+
+        face_tensor = face_tensor.float().to(self.device)
+
+        with torch.no_grad():
+            feature = self.resnet(face_tensor)
+
+        return feature.cpu().numpy().flatten()
+
     def _extract_feature_opencv(self, face_image):
         face_resized = cv2.resize(face_image, (128, 128))
         gray = cv2.cvtColor(face_resized, cv2.COLOR_BGR2GRAY)
@@ -106,4 +155,4 @@ class FaceFeatureExtractor:
         if face_result is None:
             return None
 
-        return self.extract_feature(face_result['face_image'])
+        return self.extract_feature_from_detection(face_result)
