@@ -5,9 +5,9 @@ import os
 
 class LivenessDetector:
     def __init__(self):
-        self.threshold = float(os.getenv('LIVENESS_THRESHOLD', 0.95))
-        self.photo_threshold = 0.6
-        self.video_threshold = 0.75
+        self.threshold = float(os.getenv('LIVENESS_THRESHOLD', 0.75))
+        self.photo_threshold = 0.4
+        self.video_threshold = 0.55
 
     def detect_liveness(self, image_data):
         if isinstance(image_data, bytes):
