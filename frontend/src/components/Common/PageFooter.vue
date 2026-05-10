@@ -1,6 +1,6 @@
 <template>
   <footer class="page-footer">
-    <p>© 2024 班级考勤系统 - 内容安全实验课项目</p>
+    <p>© 2024 专业考勤系统 - 内容安全实验课项目</p>
     <p class="version">版本 1.0.0</p>
   </footer>
 </template>

@@ -24,7 +24,7 @@
       >
         <el-table-column prop="student_id" label="学号" width="120" />
         <el-table-column prop="name" label="姓名" width="100" />
-        <el-table-column prop="class_name" label="班级" width="150" />
+        <el-table-column prop="class_name" label="专业" width="150" />
         <el-table-column prop="confidence" label="匹配置信度" width="120">
           <template #default="scope">
             {{ formatConfidence(scope.row.confidence) }}

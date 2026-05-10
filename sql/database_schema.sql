@@ -1,4 +1,4 @@
--- 班级考勤系统数据库物理模型
+-- 专业考勤系统数据库物理模型
 -- MySQL 8.0+
 -- 字符集：utf8mb4
 -- 设计说明：
@@ -8,7 +8,7 @@
 --    避免 source_type/source_id 多态关联无法级联删除导致幽灵数据。
 -- 3. 后端写入考勤或合照识别结果时，主表/明细表与 emotion_record 必须放在同一个数据库事务中。
 --    要求要么全部提交，要么全部回滚，避免主业务记录与情绪汇总记录不一致。
--- 4. class_enrollment_history 保存班级归属历史，报表分母按历史归属计算，避免学生退学后历史出勤率失真。
+-- 4. class_enrollment_history 保存专业归属历史，报表分母按历史归属计算，避免学生退学后历史出勤率失真。
 -- 5. calendar_date 用于报表日期范围展开，避免递归 CTE 触发 cte_max_recursion_depth 上限。
 -- 6. user_info 使用 active_username/active_student_id 生成列实现“仅活跃账号唯一”，避免软删除记录占住用户名。
 -- 7. MySQL 不承担在线人脸向量检索。face_feature 仅作持久化备份，在线识别必须由算法服务加载到内存/Redis/FAISS等向量索引。
@@ -38,7 +38,7 @@ SET FOREIGN_KEY_CHECKS = 1;
 CREATE TABLE student_info (
   student_id VARCHAR(20) NOT NULL COMMENT '学号',
   name VARCHAR(50) NOT NULL COMMENT '姓名',
-  class_name VARCHAR(50) NOT NULL COMMENT '班级',
+  class_name VARCHAR(50) NOT NULL COMMENT '专业',
   face_feature JSON NULL COMMENT '人脸特征向量JSON持久化备份，不用于在线全库扫描比对',
   face_feature_hash VARCHAR(64) NULL COMMENT '人脸特征哈希，用于缓存刷新和一致性校验',
   feature_version INT NOT NULL DEFAULT 1 COMMENT '人脸特征版本号，更新人脸时递增',
@@ -64,11 +64,11 @@ CREATE TABLE calendar_date (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='报表日期维表';
 
 CREATE TABLE class_enrollment_history (
-  enrollment_id BIGINT NOT NULL AUTO_INCREMENT COMMENT '班级归属历史ID',
+  enrollment_id BIGINT NOT NULL AUTO_INCREMENT COMMENT '专业归属历史ID',
   student_id VARCHAR(20) NOT NULL COMMENT '学号',
-  class_name VARCHAR(50) NOT NULL COMMENT '班级',
-  enrolled_at DATETIME NOT NULL COMMENT '进入该班级时间',
-  left_at DATETIME NULL COMMENT '离开该班级时间，NULL表示当前仍在该班',
+  class_name VARCHAR(50) NOT NULL COMMENT '专业',
+  enrolled_at DATETIME NOT NULL COMMENT '进入该专业时间',
+  left_at DATETIME NULL COMMENT '离开该专业时间，NULL表示当前仍在该班',
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (enrollment_id),
   INDEX idx_enrollment_class_time (class_name, enrolled_at, left_at),
@@ -79,7 +79,7 @@ CREATE TABLE class_enrollment_history (
     ON UPDATE CASCADE
     ON DELETE CASCADE,
   CHECK (left_at IS NULL OR left_at > enrolled_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='班级归属历史表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='专业归属历史表';
 
 CREATE TABLE user_info (
   user_id VARCHAR(20) NOT NULL COMMENT '用户ID',
@@ -135,7 +135,7 @@ DELIMITER ;
 CREATE TABLE attendance_record (
   record_id BIGINT NOT NULL AUTO_INCREMENT COMMENT '考勤记录ID',
   student_id VARCHAR(20) NULL COMMENT '请求关联或识别成功时关联学号，出勤统计必须结合status=1',
-  class_name VARCHAR(50) NULL COMMENT '考勤发生时的班级快照',
+  class_name VARCHAR(50) NULL COMMENT '考勤发生时的专业快照',
   status TINYINT NOT NULL COMMENT '考勤状态：0失败，1成功',
   confidence DECIMAL(5,2) NULL COMMENT '人脸匹配置信度，0-100',
   liveness_passed TINYINT NOT NULL DEFAULT 0 COMMENT '活体检测是否通过：0否，1是',
@@ -190,7 +190,7 @@ CREATE TABLE group_photo_recognition_detail (
   detail_id BIGINT NOT NULL AUTO_INCREMENT COMMENT '合照识别明细ID',
   photo_id BIGINT NOT NULL COMMENT '合照记录ID',
   student_id VARCHAR(20) NULL COMMENT '识别成功时关联学号',
-  class_name VARCHAR(50) NULL COMMENT '活动发生时的班级快照',
+  class_name VARCHAR(50) NULL COMMENT '活动发生时的专业快照',
   status TINYINT NOT NULL COMMENT '识别状态：0失败，1成功',
   confidence DECIMAL(5,2) NULL COMMENT '识别置信度，0-100',
   face_box JSON NULL COMMENT '人脸框坐标：x/y/width/height',
@@ -218,7 +218,7 @@ CREATE TABLE group_photo_recognition_detail (
 CREATE TABLE emotion_record (
   emotion_id BIGINT NOT NULL AUTO_INCREMENT COMMENT '情绪记录ID',
   student_id VARCHAR(20) NULL COMMENT '学号',
-  class_name VARCHAR(50) NULL COMMENT '业务发生时的班级快照',
+  class_name VARCHAR(50) NULL COMMENT '业务发生时的专业快照',
   source_type ENUM('attendance', 'group_photo') NOT NULL COMMENT '来源类型',
   attendance_record_id BIGINT NULL COMMENT '考勤记录ID，source_type=attendance时必填',
   group_detail_id BIGINT NULL COMMENT '合照识别明细ID，source_type=group_photo时必填',

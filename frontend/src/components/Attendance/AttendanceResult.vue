@@ -15,7 +15,7 @@
             <span class="value">{{ result.name }}</span>
           </div>
           <div class="info-item">
-            <span class="label">班级</span>
+            <span class="label">专业</span>
             <span class="value">{{ result.class_name }}</span>
           </div>
           <div class="info-item">

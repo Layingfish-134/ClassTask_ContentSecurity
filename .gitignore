@@ -48,5 +48,10 @@ data/uploads/
 backend/uploads/
 uploads/
 
+# Model files
+backend/models/
+*.pt
+*.bin
+
 # Virtual environment
 venv/

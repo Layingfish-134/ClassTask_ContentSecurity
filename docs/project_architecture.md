@@ -1,8 +1,8 @@
-# 班级考勤系统 - 项目架构设计文档
+# 专业考勤系统 - 项目架构设计文档
 
 ## 1. 项目概述
 
-本项目是一套基于人脸识别与活体检测技术的班级考勤系统，采用 Browser/Server (B/S) 架构，整合合照学生识别与学生面部情绪分析功能，旨在实现安全、高效、智能的考勤管理。
+本项目是一套基于人脸识别与活体检测技术的专业考勤系统，采用 Browser/Server (B/S) 架构，整合合照学生识别与学生面部情绪分析功能，旨在实现安全、高效、智能的考勤管理。
 
 ## 2. 系统架构设计
 
@@ -85,7 +85,7 @@
 |--------|------|------|------|
 | student_id | VARCHAR(20) | PRIMARY KEY | 学号 |
 | name | VARCHAR(50) | NOT NULL | 姓名 |
-| class_name | VARCHAR(50) | NOT NULL | 班级 |
+| class_name | VARCHAR(50) | NOT NULL | 专业 |
 | face_feature | TEXT | - | 人脸特征向量（JSON） |
 | created_at | DATETIME | DEFAULT CURRENT_TIMESTAMP | 创建时间 |
 
@@ -208,7 +208,7 @@
 | T2-1 | 合照上传页面设计与实现 | 高 | `GroupPhotoUpload.vue`, `AnalysisPage.vue` |
 | T2-2 | 图片格式校验与大小限制（≤10MB） | 高 | `fileValidator.js` |
 | T2-3 | 情绪分布图表组件（饼图、柱状图） | 高 | `EmotionChart.vue` |
-| T2-4 | 多维度筛选功能（时间、班级、活动） | 中 | `AnalysisPage.vue` |
+| T2-4 | 多维度筛选功能（时间、专业、活动） | 中 | `AnalysisPage.vue` |
 | T2-5 | 统计报表导出功能（Excel） | 中 | `StatisticsReport.vue` |
 
 ---
@@ -405,7 +405,7 @@
 | data.status | Integer | 考勤状态（0失败/1成功） |
 | data.student_id | String | 学号（成功时返回） |
 | data.name | String | 姓名（成功时返回） |
-| data.class_name | String | 班级（成功时返回） |
+| data.class_name | String | 专业（成功时返回） |
 | data.attendance_time | String | 考勤时间（ISO8601格式） |
 | data.confidence | Double | 匹配置信度（0-100） |
 | data.emotion | String | 情绪类型（happy/sad/surprised/angry/neutral） |
@@ -449,7 +449,7 @@
 | 参数名 | 类型 | 必填 | 说明 |
 |--------|------|------|------|
 | student_id | String | 否 | 学号筛选 |
-| class_name | String | 否 | 班级筛选 |
+| class_name | String | 否 | 专业筛选 |
 | start_time | String | 否 | 开始时间（ISO8601） |
 | end_time | String | 否 | 结束时间（ISO8601） |
 | status | Integer | 否 | 状态筛选（0失败/1成功） |
@@ -534,7 +534,7 @@
 | data.students | Array | 识别成功的学生列表 |
 | data.students[].student_id | String | 学号 |
 | data.students[].name | String | 姓名 |
-| data.students[].class_name | String | 班级 |
+| data.students[].class_name | String | 专业 |
 | data.students[].confidence | Double | 匹配置信度 |
 | data.students[].emotion | String | 情绪类型 |
 | data.students[].emotion_confidence | Double | 情绪置信度 |
@@ -602,7 +602,7 @@
 
 | 参数名 | 类型 | 必填 | 说明 |
 |--------|------|------|------|
-| class_name | String | 否 | 班级筛选 |
+| class_name | String | 否 | 专业筛选 |
 | activity_type | String | 否 | 活动类型筛选 |
 | start_time | String | 否 | 开始时间（ISO8601） |
 | end_time | String | 否 | 结束时间（ISO8601） |
@@ -654,7 +654,7 @@
 |--------|------|------|------|
 | student_id | String | 是 | 学号 |
 | name | String | 是 | 姓名 |
-| class_name | String | 是 | 班级 |
+| class_name | String | 是 | 专业 |
 | face_image_base64 | String | 是 | 人脸图像Base64编码 |
 
 **成功响应**:
@@ -675,7 +675,7 @@
 
 | 参数名 | 类型 | 必填 | 说明 |
 |--------|------|------|------|
-| class_name | String | 否 | 班级筛选 |
+| class_name | String | 否 | 专业筛选 |
 | keyword | String | 否 | 学号或姓名关键词 |
 | page | Integer | 否 | 页码，默认1 |
 | size | Integer | 否 | 每页数量，默认20 |
@@ -691,7 +691,7 @@
 | 参数名 | 类型 | 必填 | 说明 |
 |--------|------|------|------|
 | name | String | 否 | 姓名 |
-| class_name | String | 否 | 班级 |
+| class_name | String | 否 | 专业 |
 | face_image_base64 | String | 否 | 人脸图像（更新人脸特征时传） |
 
 #### 4.5.4 删除学生
@@ -712,7 +712,7 @@
 
 | 参数名 | 类型 | 必填 | 说明 |
 |--------|------|------|------|
-| class_name | String | 否 | 班级筛选 |
+| class_name | String | 否 | 专业筛选 |
 | start_time | String | 是 | 开始时间（ISO8601） |
 | end_time | String | 是 | 结束时间（ISO8601） |
 
@@ -730,7 +730,7 @@
 
 | 参数名 | 类型 | 必填 | 说明 |
 |--------|------|------|------|
-| class_name | String | 否 | 班级筛选 |
+| class_name | String | 否 | 专业筛选 |
 
 **成功响应**:
 - Content-Type: `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`
@@ -1158,5 +1158,5 @@ sequenceDiagram
 
 **文档版本**: v2.0  
 **创建时间**: 2024-01-15  
-**适用项目**: 班级考勤系统  
+**适用项目**: 专业考勤系统  
 **技术栈**: Vue 3 + Flask + Python 3.10+

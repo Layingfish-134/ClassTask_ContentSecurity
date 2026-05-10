@@ -1,4 +1,4 @@
-# 班级考勤系统 - 程序逻辑说明文档
+# 专业考勤系统 - 程序逻辑说明文档
 
 ---
 
@@ -125,12 +125,12 @@
 
 #### 步骤1：学生信息录入
 - **录入方式**：
-  - 单条添加：填写学号、姓名、班级
+  - 单条添加：填写学号、姓名、专业
   - 批量导入：上传 Excel 文件
 - **数据校验**：
   - 学号格式验证（如：20240001）
   - 姓名非空检查
-  - 班级名称存在性验证
+  - 专业名称存在性验证
 
 #### 步骤2：人脸图像采集
 - **采集方式**：
@@ -154,7 +154,7 @@
   |--------|------|------|
   | student_id | VARCHAR | 学生学号（主键） |
   | name | VARCHAR | 学生姓名 |
-  | class_name | VARCHAR | 所属班级 |
+  | class_name | VARCHAR | 所属专业 |
   | face_feature | JSON | 128维人脸特征向量 |
   | face_feature_hash | VARCHAR | 特征向量哈希值 |
   | feature_version | INT | 特征版本号 |
@@ -315,7 +315,7 @@ group_photo_record           group_photo_recognition_detail
 |------|------|
 | user_info | 用户账号信息 |
 | student_info | 学生基本信息及人脸特征 |
-| class_enrollment_history | 学生班级变更历史 |
+| class_enrollment_history | 学生专业变更历史 |
 | attendance_record | 考勤记录 |
 | emotion_record | 情绪分析记录 |
 | group_photo_record | 合照记录 |

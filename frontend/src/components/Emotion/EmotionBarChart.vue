@@ -80,7 +80,7 @@ const chartOptions = {
     x: {
       title: {
         display: true,
-        text: props.groupBy === 'time' ? '时间段' : '班级'
+        text: props.groupBy === 'time' ? '时间段' : '专业'
       }
     }
   }

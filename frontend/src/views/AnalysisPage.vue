@@ -3,8 +3,8 @@
     <div class="filter-section">
       <el-card title="筛选条件" class="filter-card">
         <el-form :model="filters" class="filter-form">
-          <el-form-item label="班级">
-            <el-input v-model="filters.class_name" placeholder="请输入班级名称"></el-input>
+          <el-form-item label="专业">
+            <el-input v-model="filters.class_name" placeholder="请输入专业名称"></el-input>
           </el-form-item>
           <el-form-item label="开始时间">
             <el-date-picker 

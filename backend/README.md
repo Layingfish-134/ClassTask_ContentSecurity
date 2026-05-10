@@ -1,4 +1,4 @@
-# 班级考勤系统 - 后端服务
+# 专业考勤系统 - 后端服务
 
 基于 Flask + Python 的人脸识别考勤系统后端，集成活体检测、人脸比对、合照识别、情绪分析等核心算法。
 
@@ -120,7 +120,7 @@ backend/
 
 | 文件 | 功能 |
 |------|------|
-| `student_repository.py` | 学生CRUD、按班级/关键词分页查询、查询有人脸特征的学生 |
+| `student_repository.py` | 学生CRUD、按专业/关键词分页查询、查询有人脸特征的学生 |
 | `attendance_record_repository.py` | 考勤记录多条件分页查询、情绪统计聚合查询、按日期范围查询 |
 | `group_photo_record_repository.py` | 合照记录分页查询、活动参与频次统计 |
 
@@ -227,7 +227,7 @@ backend/
 |------|------|------|
 | student_id | VARCHAR(20) PK | 学号 |
 | name | VARCHAR(50) | 姓名 |
-| class_name | VARCHAR(50) | 班级 |
+| class_name | VARCHAR(50) | 专业 |
 | face_feature | TEXT | 人脸特征向量（JSON格式） |
 | created_at | DATETIME | 创建时间 |
 
@@ -394,7 +394,7 @@ powershell -ExecutionPolicy Bypass -File scripts\check_website_smoke.ps1
 venv\Scripts\python.exe scripts\import_face_data.py
 ```
 
-文件名需尽量遵循 `学号-姓名-班级-性别.jpg` 格式。导入脚本会提取人脸特征并写入 `student_info`，同时创建学生账号，默认密码为 `demo_hash_123456`。
+文件名需尽量遵循 `学号-姓名-专业-性别.jpg` 格式。导入脚本会提取人脸特征并写入 `student_info`，同时创建学生账号，默认密码为 `demo_hash_123456`。
 
 ---
 

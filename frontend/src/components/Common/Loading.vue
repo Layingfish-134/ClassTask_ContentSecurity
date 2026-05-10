@@ -1,13 +1,17 @@
 <template>
   <div v-if="visible" class="loading-overlay">
     <div class="loading-content">
-      <el-spinner size="48" />
+      <el-icon class="loading-icon" :size="48">
+        <Loading />
+      </el-icon>
       <p>{{ text }}</p>
     </div>
   </div>
 </template>
 
 <script setup>
+import { Loading } from '@element-plus/icons-vue'
+
 defineProps({
   visible: {
     type: Boolean,
@@ -42,6 +46,20 @@ defineProps({
   flex-direction: column;
   align-items: center;
   gap: 16px;
+}
+
+.loading-icon {
+  animation: spin 1s linear infinite;
+  color: #409eff;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .loading-content p {

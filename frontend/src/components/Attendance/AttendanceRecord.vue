@@ -18,7 +18,7 @@
       </el-select>
       <el-input 
         v-model="searchForm.class_name" 
-        placeholder="班级" 
+        placeholder="专业" 
         class="class-input"
       />
       <el-button type="primary" @click="handleSearch">查询</el-button>
@@ -32,7 +32,7 @@
       <el-table-column prop="record_id" label="记录ID" width="80" />
       <el-table-column prop="student_id" label="学号" width="120" />
       <el-table-column prop="name" label="姓名" width="100" />
-      <el-table-column prop="class_name" label="班级" width="150" />
+      <el-table-column prop="class_name" label="专业" width="150" />
       <el-table-column prop="status" label="状态" width="80">
         <template #default="scope">
           <span :class="scope.row.status === 1 ? 'status-success' : 'status-failed'">
