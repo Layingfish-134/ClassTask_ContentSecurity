@@ -24,6 +24,10 @@
             <el-icon><Plus /></el-icon>
             添加学生
           </el-button>
+          <el-button v-if="isTeacherOrAdmin" type="success" @click="handleOpenBatchImport">
+            <el-icon><Upload /></el-icon>
+            批量导入学生
+          </el-button>
         </div>
       </el-card>
     </div>
@@ -113,6 +117,53 @@
       </template>
     </el-dialog>
 
+    <el-dialog
+      title="批量导入学生"
+      v-model="showBatchDialog"
+      width="560px"
+      @close="handleCloseBatchDialog"
+    >
+      <el-alert
+        title="请上传 zip 压缩包，压缩包内照片支持 jpg、jpeg、png 格式，文件名格式为：学号-姓名-专业-性别.扩展名。系统会根据照片提取人脸特征，并为导入学生创建默认密码为 123456 的学生账号。"
+        type="info"
+        :closable="false"
+        class="batch-tip"
+      />
+      <el-upload
+        ref="batchUploadRef"
+        drag
+        :auto-upload="false"
+        :limit="1"
+        accept=".zip,application/zip,application/x-zip-compressed"
+        :on-change="handleBatchFileChange"
+        :on-exceed="handleBatchFileExceed"
+        :on-remove="handleBatchFileRemove"
+      >
+        <el-icon class="el-icon--upload"><Upload /></el-icon>
+        <div class="el-upload__text">拖拽压缩包到此处，或点击选择文件</div>
+        <template #tip>
+          <div class="el-upload__tip">
+            仅支持 zip 文件；照片支持 jpg、jpeg、png，示例：20240001-张三-计算机科学与技术-男.jpg
+          </div>
+        </template>
+      </el-upload>
+      <div v-if="batchResult" class="batch-result">
+        <p>总文件数：{{ batchResult.total }}</p>
+        <p>成功：{{ batchResult.success_count }}，失败：{{ batchResult.fail_count }}</p>
+        <ul v-if="batchResult.errors?.length" class="batch-errors">
+          <li v-for="(item, index) in batchResult.errors.slice(0, 8)" :key="index">
+            {{ item.filename || item.student_id || `第${index + 1}项` }}：{{ item.reason }}
+          </li>
+        </ul>
+      </div>
+      <template #footer>
+        <el-button @click="handleCloseBatchDialog">取消</el-button>
+        <el-button type="primary" :disabled="!batchFile" @click="handleSubmitBatchImport">
+          开始导入
+        </el-button>
+      </template>
+    </el-dialog>
+
     <Loading :visible="isProcessing" text="处理中..." />
     <ErrorAlert
       :visible="showError"
@@ -125,10 +176,11 @@
 
 <script setup>
 import { ref, reactive, onMounted } from "vue";
-import { Search, Plus } from "@element-plus/icons-vue";
+import { Search, Plus, Upload } from "@element-plus/icons-vue";
+import { ElMessage } from "element-plus";
 import Loading from "../components/Common/Loading.vue";
 import ErrorAlert from "../components/Common/ErrorAlert.vue";
-import { create, list, update, remove } from "../api/student";
+import { create, list, update, remove, batchImportPhotos } from "../api/student";
 import { formatDateTime } from "../utils/format";
 import { fileToBase64 } from "../utils/file";
 import { getCurrentUser } from "../api/auth";
@@ -138,9 +190,13 @@ const isProcessing = ref(false);
 const showError = ref(false);
 const errorMessage = ref("");
 const showDialog = ref(false);
+const showBatchDialog = ref(false);
 const isEditing = ref(false);
 const isTeacherOrAdmin = ref(false);
 const currentUser = ref(null);
+const batchFile = ref(null);
+const batchResult = ref(null);
+const batchUploadRef = ref(null);
 
 const searchForm = reactive({
   keyword: "",
@@ -227,6 +283,75 @@ const handleDelete = async (row) => {
 
 const handleCloseDialog = () => {
   showDialog.value = false;
+};
+
+const handleOpenBatchImport = () => {
+  batchFile.value = null;
+  batchResult.value = null;
+  batchUploadRef.value?.clearFiles();
+  showBatchDialog.value = true;
+};
+
+const handleCloseBatchDialog = () => {
+  showBatchDialog.value = false;
+  batchFile.value = null;
+  batchResult.value = null;
+  batchUploadRef.value?.clearFiles();
+};
+
+const handleBatchFileChange = (uploadFile) => {
+  const file = uploadFile.raw;
+  if (!file) return;
+
+  if (!file.name.toLowerCase().endsWith(".zip")) {
+    showError.value = true;
+    errorMessage.value = "请上传 zip 格式压缩包";
+    batchFile.value = null;
+    batchUploadRef.value?.clearFiles();
+    return;
+  }
+
+  batchFile.value = file;
+  batchResult.value = null;
+};
+
+const handleBatchFileRemove = () => {
+  batchFile.value = null;
+};
+
+const handleBatchFileExceed = (files) => {
+  batchUploadRef.value?.clearFiles();
+  const file = files?.[0];
+  if (file) {
+    batchUploadRef.value?.handleStart(file);
+  }
+};
+
+const handleSubmitBatchImport = async () => {
+  if (!batchFile.value) {
+    showError.value = true;
+    errorMessage.value = "请先选择学生照片压缩包";
+    return;
+  }
+
+  isProcessing.value = true;
+
+  try {
+    const response = await batchImportPhotos(batchFile.value);
+    if (response.code === 200 || response.code === 42208) {
+      batchResult.value = response.data;
+      ElMessage.success(response.message || "批量导入完成");
+      await loadStudents();
+    } else {
+      showError.value = true;
+      errorMessage.value = response.message || "批量导入失败";
+    }
+  } catch (error) {
+    showError.value = true;
+    errorMessage.value = error.message || "批量导入失败";
+  } finally {
+    isProcessing.value = false;
+  }
 };
 
 const handleFaceImageChange = async (event) => {
@@ -382,5 +507,25 @@ onMounted(async () => {
 
 .text-gray {
   color: #999;
+}
+
+.batch-tip {
+  margin-bottom: 16px;
+}
+
+.batch-result {
+  margin-top: 16px;
+  line-height: 1.7;
+}
+
+.batch-result p {
+  margin: 0;
+}
+
+.batch-errors {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  color: #c45656;
+  font-size: 13px;
 }
 </style>

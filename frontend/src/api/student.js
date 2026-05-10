@@ -19,3 +19,12 @@ export const update = (id, studentData) => {
 export const remove = (id) => {
   return del(`/students/${id}`)
 }
+
+export const batchImportPhotos = (file) => {
+  const formData = new FormData()
+  formData.append('file', file)
+  return post('/students/batch-import/photos', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 120000
+  })
+}
