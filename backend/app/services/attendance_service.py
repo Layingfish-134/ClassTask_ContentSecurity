@@ -152,14 +152,14 @@ class AttendanceService:
 
     def get_attendance_records(self, student_id=None, class_name=None,
                                start_time=None, end_time=None, status=None,
-                               cursor=None, size=20, current_user=None):
+                               keyword=None, page=1, size=20, current_user=None):
         if current_user and current_user.role == 'student':
             student_id = current_user.student_id
             class_name = None
 
-        records, total, has_more, next_cursor = AttendanceRecordRepository.find_all_cursor(
+        records_pagination = AttendanceRecordRepository.find_all(
             student_id=student_id, class_name=class_name,
             start_time=start_time, end_time=end_time, status=status,
-            cursor=cursor, size=size
+            keyword=keyword, page=page, size=size
         )
-        return [r.to_dict() for r in records], size, next_cursor, has_more
+        return [r.to_dict() for r in records_pagination.items], records_pagination.total, page, size

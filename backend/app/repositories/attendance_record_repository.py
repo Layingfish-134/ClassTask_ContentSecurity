@@ -16,7 +16,8 @@ class AttendanceRecordRepository:
 
     @staticmethod
     def find_all(page=1, size=20, student_id=None, class_name=None,
-                 start_time=None, end_time=None, status=None):
+                 start_time=None, end_time=None, status=None, keyword=None):
+        from app.models.student import Student
         query = AttendanceRecord.query.join(
             AttendanceRecord.student, isouter=True
         )
@@ -39,6 +40,11 @@ class AttendanceRecordRepository:
                 pass
         if status is not None:
             query = query.filter(AttendanceRecord.status == status)
+        if keyword:
+            query = query.filter(
+                (AttendanceRecord.student_id.like(f'%{keyword}%')) |
+                (Student.name.like(f'%{keyword}%'))
+            )
 
         query = query.order_by(AttendanceRecord.attendance_time.desc())
         return query.paginate(page=page, per_page=size, error_out=False)
